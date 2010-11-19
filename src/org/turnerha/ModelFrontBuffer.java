@@ -6,6 +6,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ModelFrontBuffer {
 
 	private ShallowSlice[][] mSlices = null;
+	
+	private int mHeartBeats = 0;
 
 	// Plain jane synchronized allows the possibility that swap will be called
 	// while the rendering is using the model pointer. This would result in the
@@ -25,6 +27,11 @@ public class ModelFrontBuffer {
 	public ShallowSlice[][] swapModel(ShallowSlice[][] newModel) {
 		ShallowSlice[][] temp = mSlices;
 		mSlices = newModel;
+		++mHeartBeats;
 		return temp;
+	}
+	
+	public int getHeartBeatCount() {
+		return mHeartBeats;
 	}
 }

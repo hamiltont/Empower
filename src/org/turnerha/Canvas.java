@@ -9,15 +9,17 @@ import java.awt.Toolkit;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("unused")
+@SuppressWarnings( { "serial" })
 class Canvas extends Component {
 
 	private List<Long> updateTimes = new ArrayList<Long>();
-	private float currentFrameRate_ = 0;
+	private double framesPerSecond_ = 0;
 	private ModelFrontBuffer frontBuffer;
+	private Color mStaticPoint = (new Color(0, 255, 0, 100)).brighter()
+			.brighter().brighter().brighter().brighter();
 
-	public Canvas(ModelFrontBuffer builder) {
-		frontBuffer = builder;
+	public Canvas(ModelFrontBuffer buffer) {
+		frontBuffer = buffer;
 
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -37,28 +39,32 @@ class Canvas extends Component {
 		t.start();
 	}
 
+	private int frameCount = 0;
+	private static final int FRAMES = 30;
+	private long totalTime = 0;
+	private long averageTime;
+
+	double fps = 0;
+
+	// Draws background, then model, then overlays
 	@Override
 	public void paint(Graphics g) {
-
+		long start = System.nanoTime();
 		calculateFrameRate();
 
 		Dimension size = getSize();
 
-		g.setColor(Color.BLACK);
+		g.setColor(Color.DARK_GRAY);
 		g.fillRect(0, 0, size.width, size.height);
 
-		g.setColor(Color.white);
-		g.drawString("Framerate: " + currentFrameRate_, 10, 10);
-
 		// Set Alpha. 0.0f is 100% transparent and 1.0f is 100% opaque.
-		// Color myColor = new Color(255, 0, 0, 200);
-		Color myColor = new Color(255, 255, 255, 255);
-		g.setColor(myColor);
+		g.setColor(mStaticPoint);
 
 		frontBuffer.modelLock.lock();
 		try {
-			
+
 			ShallowSlice[][] slices = frontBuffer.getModel();
+
 			for (int row : Util.range(slices.length))
 				for (int col : Util.range(slices[0].length)) {
 					ShallowSlice s = slices[row][col];
@@ -70,10 +76,42 @@ class Canvas extends Component {
 					}
 
 				}
+
+			g.setColor(Color.white);
+			g.drawString("Heartbeats: " + frontBuffer.getHeartBeatCount(), 10,
+					40);
 			
+			long timeInMs = Main.millisecondsPerHeartbeat * frontBuffer.getHeartBeatCount();
+			double timeInDays = (timeInMs * 1.0) / (1000d * 60d * 60d * 24d);
+			String days = String.format("%1$5.3f", timeInDays);
+			g.drawString("Simulation Time (days):" + days, 10,55);
+
 		} finally {
 			frontBuffer.modelLock.unlock();
 		}
+
+		if (frameCount == FRAMES) {
+			averageTime = totalTime / FRAMES;
+			long timeInMilliSec = totalTime / 1000000;
+			double framesInMilliSeconds = (double) FRAMES
+					/ (double) timeInMilliSec;
+			fps = framesInMilliSeconds * 1000;
+
+			// fps = (FRAMES / totalTime) * 1000000000;
+			totalTime = 0;
+			frameCount = 0;
+		} else {
+			totalTime += System.nanoTime() - start;
+			frameCount++;
+		}
+		double secPerFrame = averageTime / 1000000d;
+		double framesPerSec = 1 / secPerFrame;
+		String f2 = String.format("%1$5.3f", fps);
+
+		g.setColor(Color.white);
+		String f1 = String.format("%1$5.3f", framesPerSecond_);
+		g.drawString("Framerate (inclusive): " + f1, 10, 10);
+		g.drawString("Framerate (exclusive): " + f2, 10, 25);
 
 	}
 
@@ -83,9 +121,9 @@ class Canvas extends Component {
 		updateTimes.add(new Long(time));
 
 		// We will have the wrong framerate for the first 30 draws. No big.
-		float timeInSec = (time - updateTimes.get(0)) / 1000f;
+		double totalTimeInSec = (time - updateTimes.get(0)) / 1000d;
 
-		currentFrameRate_ = 30f / timeInSec;
+		framesPerSecond_ = 30d / totalTimeInSec;
 
 		if (updateTimes.size() == 31)
 			updateTimes.remove(0);
