@@ -1,12 +1,12 @@
 package org.turnerha;
 
-public class ModelBackBuffer {
+public class ModelController {
 	private ShallowSlice[][] mFinishedSlices;
-	private ModelFrontBuffer frontBuffer;
+	private ModelProxy proxy;
 
-	public ModelBackBuffer(ModelFrontBuffer frontBuffer, int rows, int columns) {
+	public ModelController(ModelProxy proxy, int rows, int columns) {
 		mFinishedSlices = new ShallowSlice[rows][columns];
-		this.frontBuffer = frontBuffer;
+		this.proxy = proxy;
 	}
 
 	public synchronized void completeSlice(ShallowSlice slice)
@@ -16,9 +16,9 @@ public class ModelBackBuffer {
 
 		if (allSlicesAreReady()) {
 			// Swap front and back model pointers
-			frontBuffer.modelLock.lock();
-			mFinishedSlices = frontBuffer.swapModel(mFinishedSlices);
-			frontBuffer.modelLock.unlock();
+			proxy.modelLock.lock();
+			mFinishedSlices = proxy.swapModel(mFinishedSlices);
+			proxy.modelLock.unlock();
 			
 			// Toss out old model memory
 			for (int row : Util.range(mFinishedSlices.length))

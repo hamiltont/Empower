@@ -10,20 +10,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings( { "serial" })
-class Canvas extends Component {
+class ModelView extends Component {
 
 	private List<Long> updateTimes = new ArrayList<Long>();
 	private double framesPerSecond_ = 0;
-	private ModelFrontBuffer frontBuffer;
+	private ModelProxy proxy;
 	private Color mStaticPoint = (new Color(0, 255, 0, 100)).brighter()
 			.brighter().brighter().brighter().brighter();
 
-	public Canvas(ModelFrontBuffer buffer) {
-		frontBuffer = buffer;
+	public ModelView(ModelProxy proxy) {
+		this.proxy = proxy;
 
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 
-		setIgnoreRepaint(false);
 		setPreferredSize(screen);
 
 		Thread t = new Thread(new Runnable() {
@@ -42,7 +41,6 @@ class Canvas extends Component {
 	private int frameCount = 0;
 	private static final int FRAMES = 30;
 	private long totalTime = 0;
-	private long averageTime;
 
 	double fps = 0;
 
@@ -60,10 +58,10 @@ class Canvas extends Component {
 		// Set Alpha. 0.0f is 100% transparent and 1.0f is 100% opaque.
 		g.setColor(mStaticPoint);
 
-		frontBuffer.modelLock.lock();
+		proxy.modelLock.lock();
 		try {
 
-			ShallowSlice[][] slices = frontBuffer.getModel();
+			ShallowSlice[][] slices = proxy.getModel();
 
 			for (int row : Util.range(slices.length))
 				for (int col : Util.range(slices[0].length)) {
@@ -78,20 +76,19 @@ class Canvas extends Component {
 				}
 
 			g.setColor(Color.white);
-			g.drawString("Heartbeats: " + frontBuffer.getHeartBeatCount(), 10,
+			g.drawString("Heartbeats: " + proxy.getFrameCount(), 10,
 					40);
 			
-			long timeInMs = Main.millisecondsPerHeartbeat * frontBuffer.getHeartBeatCount();
+			long timeInMs = Main.millisecondsPerHeartbeat * proxy.getFrameCount();
 			double timeInDays = (timeInMs * 1.0) / (1000d * 60d * 60d * 24d);
 			String days = String.format("%1$5.3f", timeInDays);
 			g.drawString("Simulation Time (days):" + days, 10,55);
 
 		} finally {
-			frontBuffer.modelLock.unlock();
+			proxy.modelLock.unlock();
 		}
 
 		if (frameCount == FRAMES) {
-			averageTime = totalTime / FRAMES;
 			long timeInMilliSec = totalTime / 1000000;
 			double framesInMilliSeconds = (double) FRAMES
 					/ (double) timeInMilliSec;
@@ -104,8 +101,6 @@ class Canvas extends Component {
 			totalTime += System.nanoTime() - start;
 			frameCount++;
 		}
-		double secPerFrame = averageTime / 1000000d;
-		double framesPerSec = 1 / secPerFrame;
 		String f2 = String.format("%1$5.3f", fps);
 
 		g.setColor(Color.white);
@@ -129,9 +124,4 @@ class Canvas extends Component {
 			updateTimes.remove(0);
 
 	}
-
-	public void start() {
-
-	}
-
 }

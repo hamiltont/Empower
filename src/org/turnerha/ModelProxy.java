@@ -3,11 +3,11 @@ package org.turnerha;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class ModelFrontBuffer {
+public class ModelProxy {
 
 	private ShallowSlice[][] mSlices = null;
 	
-	private int mHeartBeats = 0;
+	private int mFrameCount = 0;
 
 	// Plain jane synchronized allows the possibility that swap will be called
 	// while the rendering is using the model pointer. This would result in the
@@ -17,7 +17,7 @@ public class ModelFrontBuffer {
 	// should not be swapped
 	public Lock modelLock = new ReentrantLock();
 
-	public ModelFrontBuffer(int rows, int columns) {
+	public ModelProxy(int rows, int columns) {
 	}
 
 	public ShallowSlice[][] getModel() {
@@ -27,11 +27,11 @@ public class ModelFrontBuffer {
 	public ShallowSlice[][] swapModel(ShallowSlice[][] newModel) {
 		ShallowSlice[][] temp = mSlices;
 		mSlices = newModel;
-		++mHeartBeats;
+		++mFrameCount;
 		return temp;
 	}
 	
-	public int getHeartBeatCount() {
-		return mHeartBeats;
+	public int getFrameCount() {
+		return mFrameCount;
 	}
 }

@@ -27,10 +27,10 @@ public class Main {
 		System.out.println("Total phones:" + rows * columns * phonesPerSlice);
 
 		// Create ModelFrontBuffer
-		ModelFrontBuffer frontBuffer = new ModelFrontBuffer(rows, columns);
+		ModelProxy proxy = new ModelProxy(rows, columns);
 
 		// Create ModelBackBuffer
-		ModelBackBuffer backBuffer = new ModelBackBuffer(frontBuffer, rows,
+		ModelController controller = new ModelController(proxy, rows,
 				columns);
 
 		// Build Slices
@@ -46,7 +46,7 @@ public class Main {
 					slicePhones.add(new SmartPhone(new Point(x, y)));
 				}
 
-				Slice s = new Slice(slicePhones, backBuffer, row, col);
+				Slice s = new Slice(slicePhones, controller, row, col);
 
 				// The shallow slice ctor is not thread safe. It's typically run
 				// from the thread for that slice, so that's fine. However, for
@@ -57,20 +57,17 @@ public class Main {
 			}
 
 		// Add Slices to front buffer for first read
-		frontBuffer.swapModel(slices);
+		proxy.swapModel(slices);
 
 		JFrame frame = new JFrame();
 
 		frame.setSize(screen);
 
-		Canvas canvas = new Canvas(frontBuffer);
+		ModelView view = new ModelView(proxy);
 		frame.setLayout(new BorderLayout());
-		frame.add(canvas, BorderLayout.CENTER);
+		frame.add(view, BorderLayout.CENTER);
 
 		frame.validate();
 		frame.setVisible(true);
-
-		// Start run loop that calls getModel and draws
-		canvas.start();
 	}
 }

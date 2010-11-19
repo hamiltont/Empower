@@ -1,6 +1,5 @@
 package org.turnerha;
 
-import java.awt.Point;
 import java.util.List;
 
 public class Slice {
@@ -17,7 +16,7 @@ public class Slice {
 			while (true) {
 				update();
 				try {
-					backBuffer.completeSlice(new ShallowSlice(Slice.this));
+					controller.completeSlice(new ShallowSlice(Slice.this));
 				} catch (InterruptedException e) {
 					System.out.print(Thread.currentThread().getName());
 					System.out
@@ -27,16 +26,16 @@ public class Slice {
 		}
 	};
 
-	private ModelBackBuffer backBuffer;
+	private ModelController controller;
 
-	public Slice(List<SmartPhone> phones, ModelBackBuffer backBuffer,
+	public Slice(List<SmartPhone> phones, ModelController controller,
 			int myRow, int myColumn) {
 		mPhones = phones;
 
 		mRow = myRow;
 		mColumn = myColumn;
 
-		this.backBuffer = backBuffer;
+		this.controller = controller;
 
 		mUpdateThread = new Thread(mUpdateLoop);
 		mUpdateThread.setName("Slice [" + myRow + "," + myColumn + "]");
