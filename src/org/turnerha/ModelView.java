@@ -17,10 +17,11 @@ class ModelView extends Component {
 	private ModelProxy proxy;
 	private Color mStaticPoint = (new Color(0, 255, 0, 100)).brighter()
 			.brighter().brighter().brighter().brighter();
-
-	public ModelView(ModelProxy proxy) {
+	private ModelController controller_;
+	
+	public ModelView(ModelProxy proxy, ModelController cont) {
 		this.proxy = proxy;
-
+		controller_ = cont;
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 
 		setPreferredSize(screen);
@@ -83,7 +84,8 @@ class ModelView extends Component {
 			double timeInDays = (timeInMs * 1.0) / (1000d * 60d * 60d * 24d);
 			String days = String.format("%1$5.3f", timeInDays);
 			g.drawString("Simulation Time (days):" + days, 10,55);
-
+			g.drawString("Slowdown Factor: " + controller_.sleepTime.get(), 10, 70);
+			
 		} finally {
 			proxy.modelLock.unlock();
 		}

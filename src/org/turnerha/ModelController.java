@@ -1,8 +1,11 @@
 package org.turnerha;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class ModelController {
 	private ShallowSlice[][] mFinishedSlices;
 	private ModelProxy proxy;
+	public AtomicInteger sleepTime = new AtomicInteger(100);
 
 	public ModelController(ModelProxy proxy, int rows, int columns) {
 		mFinishedSlices = new ShallowSlice[rows][columns];
@@ -15,6 +18,9 @@ public class ModelController {
 		mFinishedSlices[slice.getRow()][slice.getColumn()] = slice;
 
 		if (allSlicesAreReady()) {
+			
+			Thread.sleep(sleepTime.get());
+			
 			// Swap front and back model pointers
 			proxy.modelLock.lock();
 			mFinishedSlices = proxy.swapModel(mFinishedSlices);
