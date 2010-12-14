@@ -1,1 +1,4 @@
 bin/*
+
+# For mac users only
+.DS_Store
