@@ -22,10 +22,13 @@ public class Map extends JPanel {
 	private static final double latDifference = topRight.lat - botLeft.lat;
 	private static final double lonDifference = botLeft.lon - topRight.lon;
 
-	private static final int mPixelWidth = 1400;
-	private static final int mPixelHeight = 850;
+	private static int mPixelWidth = 1400;
+	private static int mPixelHeight = 850;
 
-	public Map(List<MyPolygon> polys) {
+	public Map(List<MyPolygon> polys, Dimension screen) {
+		mPixelWidth = screen.width;
+		mPixelHeight = screen.height;
+		
 		mPolys = polys;
 
 		setPreferredSize(new Dimension(mPixelWidth, mPixelHeight));

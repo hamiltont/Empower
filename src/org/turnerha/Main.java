@@ -11,12 +11,16 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import javax.swing.JFrame;
+import javax.swing.JLayeredPane;
+
+import org.turnerha.map.KMLReader;
+import org.turnerha.map.Map;
 
 public class Main {
 
 	public static int millisecondsPerHeartbeat = 1000;
-	public static int rows = 1;     // Do not change this unless you are sure 
-	public static int columns = 1;  // you can share Smart-phones between models
+	public static int rows = 1; // Do not change this unless you are sure
+	public static int columns = 1; // you can share Smart-phones between models
 	public static int phonesPerSlice = 20000;
 
 	public static void main(String[] args) {
@@ -70,13 +74,25 @@ public class Main {
 
 		// Setup the UI and start the display
 		JFrame frame = new JFrame();
-
 		frame.setSize(screen);
-
+		
+		
+		JLayeredPane layeredPane = new JLayeredPane();
+		layeredPane.setSize(screen);
+		
+		
 		ModelView view = new ModelView(proxy, controller);
-		frame.setLayout(new BorderLayout());
-		frame.add(view, BorderLayout.CENTER);
-
+		view.setBounds(0, 0, screen.width, screen.height);
+		layeredPane.add(view, JLayeredPane.PALETTE_LAYER);
+		
+		KMLReader reader = new KMLReader();
+		Map m = new Map(reader.getPoly(), screen);
+		m.setBounds(0, 0, screen.width, screen.height);
+		layeredPane.add(m, JLayeredPane.DEFAULT_LAYER);
+		//
+		
+		
+		frame.add(layeredPane);
 		frame.validate();
 		frame.setVisible(true);
 	}
@@ -105,7 +121,7 @@ public class Main {
 			case KeyEvent.VK_MINUS:
 			case KeyEvent.VK_UNDERSCORE:
 				// Plus means slow system down, which means increase sleep time
-				
+
 				mc.sleepTime.addAndGet(speedFactor);
 				return true;
 			}

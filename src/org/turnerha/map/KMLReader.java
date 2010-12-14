@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -18,16 +17,15 @@ import com.keithpower.gekmlib.KMLParser;
 import com.keithpower.gekmlib.Kml;
 import com.keithpower.gekmlib.Placemark;
 
-public class Main {
+public class KMLReader {
 
 	private List<MyPolygon> mPoly;
 
-	public static void main(String[] args) {
-
-		new Main();
+	public List<MyPolygon> getPoly() {
+		return mPoly;
 	}
 
-	public Main() {
+	public KMLReader() {
 		KMLParser parser = new KMLParser();
 		Configuration.properties.setProperty(Configuration.GENERATE_IDS,
 				Configuration.OFF);
@@ -56,24 +54,10 @@ public class Main {
 					dp.lat = coords[i + 1];
 					polyPoints.add(dp);
 				}
-				
+
 				poly.mLocations = polyPoints;
 				mPoly.add(poly);
 			}
-
-			final List<MyPolygon> polys = mPoly;
-			SwingUtilities.invokeLater(new Runnable() {
-
-				@Override
-				public void run() {
-					JFrame f = new JFrame();
-					Map m = new Map(polys);
-					f.add(m);
-					f.pack();
-					f.setVisible(true);
-				}
-			});
-
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (SAXException e) {

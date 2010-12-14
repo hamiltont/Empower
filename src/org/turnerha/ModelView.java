@@ -51,11 +51,6 @@ class ModelView extends Component {
 		long start = System.nanoTime();
 		calculateFrameRate();
 
-		Dimension size = getSize();
-
-		g.setColor(Color.DARK_GRAY);
-		g.fillRect(0, 0, size.width, size.height);
-
 		// Set Alpha. 0.0f is 100% transparent and 1.0f is 100% opaque.
 		g.setColor(mStaticPoint);
 
