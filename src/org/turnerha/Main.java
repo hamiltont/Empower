@@ -15,9 +15,9 @@ import javax.swing.JFrame;
 public class Main {
 
 	public static int millisecondsPerHeartbeat = 1000;
-	public static int rows = 1;
-	public static int columns = 1;
-	public static int phonesPerSlice = 200;
+	public static int rows = 1;     // Do not change this unless you are sure 
+	public static int columns = 1;  // you can share Smart-phones between models
+	public static int phonesPerSlice = 20000;
 
 	public static void main(String[] args) {
 		new Main();
