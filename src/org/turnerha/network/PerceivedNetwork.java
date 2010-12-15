@@ -7,12 +7,20 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.Paint;
+import java.awt.PaintContext;
 import java.awt.Point;
 import java.awt.RadialGradientPaint;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.Transparency;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
 import java.awt.image.LookupOp;
 import java.awt.image.LookupTable;
+import java.awt.image.RescaleOp;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -30,6 +38,12 @@ public class PerceivedNetwork extends Network {
 	HashMap<Integer, BufferedImage> mReadingCircles = new HashMap<Integer, BufferedImage>();
 
 	LookupOp mColorize;
+	
+	/* Create a rescale filter op that makes the image 50% opaque */
+	float[] scales = { 1f, 1f, 1f, 0.5f };
+	float[] offsets = new float[4];
+	RescaleOp mRealpha = new RescaleOp(scales, offsets, null);
+
 
 	public PerceivedNetwork(Dimension size, Map m) {
 
@@ -64,23 +78,21 @@ public class PerceivedNetwork extends Network {
 
 		Graphics2D g = (Graphics2D) mNetworkBlackWhite.getGraphics();
 
-		g.setComposite(BlendComposite.Average.derive(alpha));
+		g.setComposite(BlendComposite.Average.derive(0.1f));
 		g.drawImage(mReading, null, p.x - circleRadius, p.y - circleRadius);
 	}
 
 	@Override
 	public void paint(Graphics g) {
 
-		try {
-			ImageIO.write(mNetworkBlackWhite, "png", new File(
-					"perceived-nw.png"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
 		BufferedImage heatMap = mColorize.filter(mNetworkBlackWhite, null);
 
-		g.drawImage(heatMap, 0, 0, null);
+			
+		Graphics2D g2d = (Graphics2D) g;
+
+		/* Draw the image, applying an alpha filter */
+		g2d.drawImage(heatMap, mRealpha, 0, 0);
+
 
 	}
 
@@ -88,13 +100,14 @@ public class PerceivedNetwork extends Network {
 		BufferedImage im = createCompatibleTranslucentImage(size, size);
 		float radius = size / 2f;
 
-		RadialGradientPaint gradient = new RadialGradientPaint(radius, radius,
-				radius, new float[] { 0f, 1f }, new Color[] { focusColor,
-						new Color(0xffffffff, true) });
+		//RadialGradientPaint gradient = new RadialGradientPaint(radius, radius,
+		//		radius, new float[] { 0f, 1f }, new Color[] { focusColor,
+		//				new Color(0xffffffff, true) });
 
 		Graphics2D g = (Graphics2D) im.getGraphics();
 
-		g.setPaint(gradient);
+		//g.setPaint(gradient);
+		g.setColor(focusColor);
 		g.fillRect(0, 0, size, size);
 
 		return im;

@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import javax.swing.JFrame;
-import javax.swing.JLayeredPane;
 
 import org.turnerha.map.KMLReader;
 import org.turnerha.map.Map;
@@ -25,7 +24,7 @@ public class Main {
 	public static int millisecondsPerHeartbeat = 1000;
 	public static int rows = 1; // Do not change this unless you are sure
 	public static int columns = 1; // you can share Smart-phones between models
-	public static int phonesPerSlice = 20000;
+	public static int phonesPerSlice = 2000;
 
 	public static void main(String[] args) {
 		new Main();
@@ -36,11 +35,6 @@ public class Main {
 		screen.height -= 20;
 
 		Random r = new Random();
-
-		System.out.println("Processors Available: "
-				+ Runtime.getRuntime().availableProcessors());
-		System.out.println("Screen Size: " + screen);
-		System.out.println("Total phones:" + rows * columns * phonesPerSlice);
 
 		// Read in KML and create map - it has no dependencies
 		KMLReader reader = new KMLReader();
