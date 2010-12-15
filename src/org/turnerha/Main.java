@@ -1,6 +1,5 @@
 package org.turnerha;
 
-import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
@@ -29,6 +28,8 @@ public class Main {
 
 	public Main() {
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+		screen.height -= 20;
+
 		Random r = new Random();
 
 		System.out.println("Processors Available: "
@@ -36,6 +37,13 @@ public class Main {
 		System.out.println("Screen Size: " + screen);
 		System.out.println("Total phones:" + rows * columns * phonesPerSlice);
 
+		// Read in KML and create map - it has no dependencies
+		KMLReader reader = new KMLReader();
+		Dimension foo = new Dimension(screen);
+		foo.height -= 25;
+		Map map = new Map(reader.getPoly(), foo);
+		map.setBounds(0, 0, foo.width, foo.height);
+		
 		// Create ModelFrontBuffer
 		ModelProxy proxy = new ModelProxy(rows, columns);
 
@@ -52,7 +60,7 @@ public class Main {
 				int o : Util.range(phonesPerSlice)) {
 					int x = r.nextInt(screen.width);
 					int y = r.nextInt(screen.height);
-					slicePhones.add(new SmartPhone(new Point(x, y)));
+					slicePhones.add(new SmartPhone(new Point(x, y), reader.getPoly()));
 				}
 
 				Slice s = new Slice(slicePhones, controller, row, col);
@@ -75,23 +83,17 @@ public class Main {
 		// Setup the UI and start the display
 		JFrame frame = new JFrame();
 		frame.setSize(screen);
-		
-		
+
 		JLayeredPane layeredPane = new JLayeredPane();
 		layeredPane.setSize(screen);
-		
-		
+
 		ModelView view = new ModelView(proxy, controller);
 		view.setBounds(0, 0, screen.width, screen.height);
 		layeredPane.add(view, JLayeredPane.PALETTE_LAYER);
-		
-		KMLReader reader = new KMLReader();
-		Map m = new Map(reader.getPoly(), screen);
-		m.setBounds(0, 0, screen.width, screen.height);
-		layeredPane.add(m, JLayeredPane.DEFAULT_LAYER);
-		//
-		
-		
+
+		layeredPane.add(map, JLayeredPane.DEFAULT_LAYER);
+
+
 		frame.add(layeredPane);
 		frame.validate();
 		frame.setVisible(true);

@@ -41,14 +41,25 @@ public class Slice {
 		mUpdateThread.setName("Slice [" + myRow + "," + myColumn + "]");
 		mUpdateThread.setDaemon(true);
 	}
-	
+
 	public void start() {
 		mUpdateThread.start();
 	}
 
 	private void update() {
-		for (SmartPhone phone: mPhones)
-			phone.move();
+
+		int size = mPhones.size();
+		for (int i = 0; i < size; i++) {
+			SmartPhone sp = mPhones.get(i);
+			sp.move();
+			
+			if (sp.getShouldRemove()) {
+				mPhones.remove(i);
+
+				i--;
+				size--;
+			}
+		}
 	}
 
 	public List<SmartPhone> getPhones() {

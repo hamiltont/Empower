@@ -2,10 +2,8 @@ package org.turnerha;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
-import java.awt.Toolkit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,9 +20,10 @@ class ModelView extends Component {
 	public ModelView(ModelProxy proxy, ModelController cont) {
 		this.proxy = proxy;
 		controller_ = cont;
-		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 
-		setPreferredSize(screen);
+		// If our parent does not set our size, then we should do it manually
+		//Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+		//setPreferredSize(screen);
 
 		Thread t = new Thread(new Runnable() {
 			@Override

@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +36,10 @@ public class Map extends JPanel {
 
 		for (MyPolygon poly : polys) {
 			poly.mPoints = new ArrayList<Point>(poly.mLocations.size());
+			int[] xArray = new int[poly.mLocations.size()];
+			int[] yArray = new int[poly.mLocations.size()];
 
+			int pos = 0;
 			for (DoublePoint dp : poly.mLocations) {
 
 				// Remove the base, and then multiple by pixels per latitude
@@ -52,8 +56,14 @@ public class Map extends JPanel {
 
 				int x = -1 * (int) Math.round(xFloat);
 
-				poly.mPoints.add(new Point(x, y));
+				xArray[pos] = x;
+				yArray[pos] = y;
+				
+				poly.mPoints.add(new Point(x,y));
+				pos++;
+				
 			}
+			poly.mPoly = new Polygon(xArray, yArray, xArray.length);
 		}
 	}
 

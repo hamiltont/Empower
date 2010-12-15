@@ -32,7 +32,7 @@ public class KMLReader {
 
 		Kml kml;
 		try {
-			kml = parser.parse(new File("va.kml"));
+			kml = parser.parse(new File("va_counties.kml"));
 			Document d = kml.getDocument();
 			Feature[] features = d.getFeatures();
 

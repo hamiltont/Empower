@@ -1,15 +1,21 @@
 package org.turnerha;
 
 import java.awt.Point;
+import java.util.List;
 import java.util.Random;
+
+import org.turnerha.map.MyPolygon;
 
 public class SmartPhone {
 	
 	private Point mPoint;
 	private Random mRandom = new Random();
+	private List<MyPolygon> mCounties;
+	private boolean mShouldRemove = false;
 	
-	public SmartPhone(Point p) {
+	public SmartPhone(Point p, List<MyPolygon> counties) {
 		mPoint = p;
+		mCounties = counties;
 	}
 	
 	public void move() {
@@ -28,9 +34,18 @@ public class SmartPhone {
 		else
 			mPoint.y -= yChange;
 		
+		for (MyPolygon poly : mCounties)
+			if (poly.mPoly.contains(mPoint))
+				return;
+		
+		mShouldRemove = true;
 	}
 	
 	public Point getLocation() {
 		return mPoint;
+	}
+	
+	public boolean getShouldRemove() {
+		return mShouldRemove;
 	}
 }
