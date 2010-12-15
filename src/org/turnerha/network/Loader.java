@@ -16,7 +16,7 @@ public class Loader {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
+	/*public static void main(String[] args) {
 
 		BufferedImage colorImage;
 		try {
@@ -32,7 +32,7 @@ public class Loader {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
+	}*/
 
 	/**
 	 * Converts an arbitrary image into the color scheme we are using for the

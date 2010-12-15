@@ -18,9 +18,7 @@ public class Slice {
 				try {
 					controller.completeSlice(new ShallowSlice(Slice.this));
 				} catch (InterruptedException e) {
-					System.out.print(Thread.currentThread().getName());
-					System.out
-							.println(" was interrupted. This is the only way to exit for now");
+					e.printStackTrace();
 				}
 			}
 		}

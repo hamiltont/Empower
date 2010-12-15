@@ -7,8 +7,9 @@ package org.turnerha.map;
 public class DoublePoint {
 	public double lat;
 	public double lon;
-	
-	public DoublePoint() {};
+
+	public DoublePoint() {
+	};
 
 	public DoublePoint(double latit, double longit) {
 		lat = latit;
@@ -25,5 +26,10 @@ public class DoublePoint {
 		if (p.lat == lat && p.lon == lon)
 			return true;
 		return false;
+	}
+
+	@Override
+	public String toString() {
+		return "[" + lat + ", " + lon + "]";
 	}
 }

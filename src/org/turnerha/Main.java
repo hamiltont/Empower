@@ -44,7 +44,7 @@ public class Main {
 		KMLReader reader = new KMLReader(geoFileNameKml);
 		Dimension foo = new Dimension(screen);
 		foo.height -= 25;
-		Map map = new Map(reader.getPoly(), foo);
+		Map map = new Map(reader.getPoly(), foo, reader.mTopRight, reader.mBottomLeft);
 		map.setBounds(0, 0, foo.width, foo.height);
 
 		// Create perceived Network

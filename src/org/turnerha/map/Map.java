@@ -15,18 +15,23 @@ public class Map extends JPanel {
 
 	private List<MyPolygon> mPolys;
 
-	private static final DoublePoint topRight = new DoublePoint(39.520992,
+	private static DoublePoint topRight = new DoublePoint(39.520992,
 			-74.421386);
-	private static final DoublePoint botLeft = new DoublePoint(36.509636,
+	private static DoublePoint botLeft = new DoublePoint(36.509636,
 			-83.913574);
 
-	private static final double latDifference = topRight.lat - botLeft.lat;
-	private static final double lonDifference = botLeft.lon - topRight.lon;
+	private static double latDifference = topRight.lat - botLeft.lat;
+	private static double lonDifference = botLeft.lon - topRight.lon;
 
 	private static int mPixelWidth = 1400;
 	private static int mPixelHeight = 850;
 
-	public Map(List<MyPolygon> polys, Dimension screen) {
+	public Map(List<MyPolygon> polys, Dimension screen, DoublePoint tr, DoublePoint bl) {
+		topRight = tr;
+		botLeft = bl;
+		latDifference = topRight.lat - botLeft.lat;
+		lonDifference = botLeft.lon - topRight.lon;
+		
 		mPixelWidth = screen.width;
 		mPixelHeight = screen.height;
 
