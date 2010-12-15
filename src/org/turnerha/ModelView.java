@@ -9,7 +9,7 @@ import java.util.List;
 
 import org.turnerha.map.Map;
 import org.turnerha.network.Network;
-import org.turnerha.network.RealNetwork;
+import org.turnerha.network.PerceivedNetwork;
 
 @SuppressWarnings( { "serial" })
 class ModelView extends Component {
@@ -20,20 +20,20 @@ class ModelView extends Component {
 	private Color mStaticPoint = (new Color(0, 255, 0, 100)).brighter()
 			.brighter().brighter().brighter().brighter();
 	private ModelController controller_;
-	
+
 	private Map mMap;
 	private Network mNetwork;
-	
+
 	public ModelView(ModelProxy proxy, ModelController cont, Map m, Network rn) {
 		this.proxy = proxy;
 		controller_ = cont;
 
 		mMap = m;
 		mNetwork = rn;
-		
+
 		// If our parent does not set our size, then we should do it manually
-		//Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-		//setPreferredSize(screen);
+		// Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+		// setPreferredSize(screen);
 
 		Thread t = new Thread(new Runnable() {
 			@Override
@@ -61,7 +61,7 @@ class ModelView extends Component {
 		calculateFrameRate();
 
 		mMap.paint(g);
-		
+
 		// Set Alpha. 0.0f is 100% transparent and 1.0f is 100% opaque.
 		g.setColor(mStaticPoint);
 
@@ -83,23 +83,22 @@ class ModelView extends Component {
 				}
 
 			g.setColor(Color.white);
-			g.drawString("Heartbeats: " + proxy.getFrameCount(), 10,
-					40);
-			
-			long timeInMs = Math.round(Main.hoursPerHeartbeat * 60f * 1000f) * proxy.getFrameCount();
+			g.drawString("Heartbeats: " + proxy.getFrameCount(), 10, 40);
+
+			long timeInMs = Math.round(Main.hoursPerHeartbeat * 60f * 1000f)
+					* proxy.getFrameCount();
 			double timeInDays = (timeInMs * 1.0) / (1000d * 60d * 60d * 24d);
 			String days = String.format("%1$5.3f", timeInDays);
-			g.drawString("Simulation Time (days):" + days, 10,55);
-			g.drawString("Slowdown Factor: " + controller_.sleepTime.get(), 10, 70);
-			
+			g.drawString("Simulation Time (days):" + days, 10, 55);
+			g.drawString("Slowdown Factor: " + controller_.sleepTime.get()
+					+ " (Press + or - to change)", 10, 70);
+
 		} finally {
 			proxy.modelLock.unlock();
 		}
-		
-		
+
 		mNetwork.paint(g);
-		
-		
+
 		if (frameCount == FRAMES) {
 			long timeInMilliSec = totalTime / 1000000;
 			double framesInMilliSeconds = (double) FRAMES
@@ -120,6 +119,20 @@ class ModelView extends Component {
 		g.drawString("Framerate (inclusive): " + f1, 10, 10);
 		g.drawString("Framerate (exclusive): " + f2, 10, 25);
 
+		g.drawString("Coverage: xx%", 10, 85);
+		g.drawString("Accuracy within coverage: xx%", 10, 100);
+		g.drawString("Accuracy total: xx%", 10, 115);
+
+		if (mNetwork instanceof PerceivedNetwork)
+			g.drawString("Viewing Perceived Network (Press R to change)", 10, 130);
+		else
+			g.drawString("Viewing Perceived Network (Press P to change)", 10, 130);
+		
+		g.drawString("Press (esc) to quit", 10, 145);
+	}
+	
+	public void setNetwork(Network n) {
+		mNetwork = n;
 	}
 
 	private void calculateFrameRate() {

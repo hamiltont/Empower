@@ -25,6 +25,10 @@ public class Main {
 	public static int rows = 1; // Do not change this unless you are sure
 	public static int columns = 1; // you can share Smart-phones between models
 	public static int phonesPerSlice = 2000;
+	
+	ModelView mModelView;
+	RealNetwork mRealNetwork;
+	PerceivedNetwork mPerceivedNetwork;
 
 	public Main(File geoFileNameKml, File networkFileName,
 			float moveTendenancy, int mobilityInMeters, float timePerHeartbeat,
@@ -45,12 +49,14 @@ public class Main {
 
 		// Create perceived Network
 		PerceivedNetwork pn = new PerceivedNetwork(screen, map);
+		mPerceivedNetwork = pn;
 
 		// Create real network
 		BufferedImage colorScheme = NetworkUtils
 				.createGradientImage(null, null);
 		RealNetwork rn = new RealNetwork(networkFileName, screen, colorScheme,
 				0.5f, map);
+		mRealNetwork = rn;
 
 		// Create ModelFrontBuffer
 		ModelProxy proxy = new ModelProxy(rows, columns);
@@ -98,6 +104,7 @@ public class Main {
 		frame.setLayout(null);
 
 		ModelView view = new ModelView(proxy, controller, map, pn);
+		mModelView = view;
 		view.setBounds(0, 0, screen.width, screen.height);
 
 		frame.add(view);
@@ -132,6 +139,21 @@ public class Main {
 
 				mc.sleepTime.addAndGet(speedFactor);
 				return true;
+				
+			case KeyEvent.VK_P:
+				// Means switch to perceived network
+				mModelView.setNetwork(mPerceivedNetwork);
+				return true;
+				
+			case KeyEvent.VK_R:
+				// Means switch to real network
+				mModelView.setNetwork(mRealNetwork);
+				return true;
+				
+			case KeyEvent.VK_ESCAPE:
+				// Means quit
+				System.exit(0);
+				
 			}
 
 			return false;
