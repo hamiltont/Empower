@@ -11,12 +11,11 @@ import java.awt.Point;
 import java.awt.RadialGradientPaint;
 import java.awt.Transparency;
 import java.awt.image.BufferedImage;
-import java.awt.image.ByteLookupTable;
 import java.awt.image.LookupOp;
 import java.awt.image.LookupTable;
-import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 
@@ -26,7 +25,9 @@ import org.turnerha.map.Map;
 public class PerceivedNetwork extends Network {
 	BufferedImage mNetworkBlackWhite;
 
-	BufferedImage mReading;
+	//BufferedImage mReading;
+	
+	HashMap<Integer, BufferedImage> mReadingCircles = new HashMap<Integer, BufferedImage>();
 
 	LookupOp mColorize;
 
@@ -39,9 +40,7 @@ public class PerceivedNetwork extends Network {
 		g.fillRect(0, 0, size.width, size.height);
 		g.dispose();
 
-		// removePixelsNotInPolys(mNetworkBlackWhite, m);
-
-		mReading = createFadedCircleImage(10);
+		//mReading = createFadedCircleImage(10);
 
 		BufferedImage gradient = NetworkUtils.createGradientImage(null, null);
 
@@ -49,26 +48,23 @@ public class PerceivedNetwork extends Network {
 		mColorize = new LookupOp(lookupTable, null);
 	}
 
-	private void removePixelsNotInPolys(BufferedImage network, Map map) {
-
-		// Iterate over all pixels, check that they are within the polys
-		for (int x = 0; x < network.getWidth(); x++)
-			for (int y = 0; y < network.getHeight(); y++) {
-				if (false == map.contains(x, y))
-					network.setRGB(x, y, 0);
-			}
-
-	}
-
 	// Does nothing with value right now
 	public void addReading(int value, Point p) {
 
+		BufferedImage mReading = mReadingCircles.get(new Integer(value));
+		
+		if (mReading == null) {
+			Color c = new Color(value);
+			mReading = createFadedCircleImage(10, c);
+			mReadingCircles.put(new Integer(value), mReading);
+		}
+		
 		int circleRadius = mReading.getWidth() / 2;
 		float alpha = 1f;
 
 		Graphics2D g = (Graphics2D) mNetworkBlackWhite.getGraphics();
 
-		g.setComposite(BlendComposite.Multiply.derive(alpha));
+		g.setComposite(BlendComposite.Average.derive(alpha));
 		g.drawImage(mReading, null, p.x - circleRadius, p.y - circleRadius);
 	}
 
@@ -88,12 +84,12 @@ public class PerceivedNetwork extends Network {
 
 	}
 
-	public static BufferedImage createFadedCircleImage(int size) {
+	public static BufferedImage createFadedCircleImage(int size, Color focusColor) {
 		BufferedImage im = createCompatibleTranslucentImage(size, size);
 		float radius = size / 2f;
 
 		RadialGradientPaint gradient = new RadialGradientPaint(radius, radius,
-				radius, new float[] { 0f, 1f }, new Color[] { Color.BLACK,
+				radius, new float[] { 0f, 1f }, new Color[] { focusColor,
 						new Color(0xffffffff, true) });
 
 		Graphics2D g = (Graphics2D) im.getGraphics();

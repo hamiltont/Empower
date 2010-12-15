@@ -48,9 +48,16 @@ public class Main {
 		foo.height -= 25;
 		Map map = new Map(reader.getPoly(), foo);
 		map.setBounds(0, 0, foo.width, foo.height);
-		
+
 		// Create perceived Network
 		PerceivedNetwork pn = new PerceivedNetwork(screen, map);
+
+		// Create real network
+		BufferedImage colorScheme = NetworkUtils
+				.createGradientImage(null, null);
+		RealNetwork rn = new RealNetwork(
+				new File("network-images/network1.png"), screen, colorScheme,
+				0.5f, map);
 
 		// Create ModelFrontBuffer
 		ModelProxy proxy = new ModelProxy(rows, columns);
@@ -69,7 +76,7 @@ public class Main {
 					int x = r.nextInt(screen.width);
 					int y = r.nextInt(screen.height);
 					slicePhones.add(new SmartPhone(new Point(x, y), reader
-							.getPoly(), pn));
+							.getPoly(), pn, rn));
 				}
 
 				Slice s = new Slice(slicePhones, controller, row, col);
@@ -93,16 +100,9 @@ public class Main {
 		JFrame frame = new JFrame();
 		frame.setSize(screen);
 		frame.setLayout(null);
-		
-		BufferedImage colorScheme = NetworkUtils
-				.createGradientImage(null, null);
-		RealNetwork rn = new RealNetwork(
-				new File("network-images/network2.png"), screen, colorScheme,
-				0.5f, map);
 
 		ModelView view = new ModelView(proxy, controller, map, pn);
 		view.setBounds(0, 0, screen.width, screen.height);
-
 
 		frame.add(view);
 		frame.validate();

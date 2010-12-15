@@ -6,6 +6,7 @@ import java.util.Random;
 
 import org.turnerha.map.MyPolygon;
 import org.turnerha.network.PerceivedNetwork;
+import org.turnerha.network.RealNetwork;
 
 public class SmartPhone {
 
@@ -14,11 +15,13 @@ public class SmartPhone {
 	private List<MyPolygon> mCounties;
 	private boolean mShouldRemove = false;
 	private PerceivedNetwork mPerceivedNetwork;
+	private RealNetwork mRealNetwork;
 
-	public SmartPhone(Point p, List<MyPolygon> counties, PerceivedNetwork pn) {
+	public SmartPhone(Point p, List<MyPolygon> counties, PerceivedNetwork pn, RealNetwork rn) {
 		mPoint = p;
 		mCounties = counties;
 		mPerceivedNetwork = pn;
+		mRealNetwork = rn;
 	}
 
 	public void move() {
@@ -39,7 +42,8 @@ public class SmartPhone {
 
 		for (MyPolygon poly : mCounties)
 			if (poly.mPoly.contains(mPoint)) {
-				mPerceivedNetwork.addReading(5, mPoint);
+				int rgb = mRealNetwork.getRGBat(mPoint);
+				mPerceivedNetwork.addReading(rgb, mPoint);
 				return;
 			}
 

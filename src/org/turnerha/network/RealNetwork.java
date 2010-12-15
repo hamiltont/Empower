@@ -3,14 +3,13 @@ package org.turnerha.network;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
-import java.awt.image.Raster;
 import java.awt.image.RescaleOp;
 import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
-import javax.swing.JPanel;
 
 import org.turnerha.map.Map;
 
@@ -62,6 +61,10 @@ public class RealNetwork extends Network {
 					network.setRGB(x, y, 0);
 			}
 
+	}
+	
+	public int getRGBat(Point p) {
+		return mRealNetwork.getRGB(p.x, p.y);
 	}
 
 	public void paint(Graphics g) {
