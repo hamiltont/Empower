@@ -72,7 +72,7 @@ public class Map extends JPanel {
 		g.setColor(Color.black);
 		g.fillRect(0, 0, mPixelWidth, mPixelHeight);
 
-		g.setColor(Color.white);
+		g.setColor(Color.DARK_GRAY);
 
 		for (MyPolygon poly : mPolys)
 		{
