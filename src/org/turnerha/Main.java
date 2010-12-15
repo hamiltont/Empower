@@ -21,23 +21,23 @@ import org.turnerha.network.RealNetwork;
 
 public class Main {
 
-	public static int millisecondsPerHeartbeat = 1000;
+	public static float hoursPerHeartbeat = 1000;
 	public static int rows = 1; // Do not change this unless you are sure
 	public static int columns = 1; // you can share Smart-phones between models
 	public static int phonesPerSlice = 2000;
 
-	public static void main(String[] args) {
-		new Main();
-	}
-
-	public Main() {
+	public Main(File geoFileNameKml, File networkFileName,
+			float moveTendenancy, int mobilityInMeters, float timePerHeartbeat,
+			float inputFrequency, boolean usingGPS) {
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 		screen.height -= 20;
+		
+		hoursPerHeartbeat = timePerHeartbeat;
 
 		Random r = new Random();
 
 		// Read in KML and create map - it has no dependencies
-		KMLReader reader = new KMLReader();
+		KMLReader reader = new KMLReader(geoFileNameKml);
 		Dimension foo = new Dimension(screen);
 		foo.height -= 25;
 		Map map = new Map(reader.getPoly(), foo);
@@ -49,8 +49,7 @@ public class Main {
 		// Create real network
 		BufferedImage colorScheme = NetworkUtils
 				.createGradientImage(null, null);
-		RealNetwork rn = new RealNetwork(
-				new File("network-images/network1.png"), screen, colorScheme,
+		RealNetwork rn = new RealNetwork(networkFileName, screen, colorScheme,
 				0.5f, map);
 
 		// Create ModelFrontBuffer
@@ -69,8 +68,11 @@ public class Main {
 				int o : Util.range(phonesPerSlice)) {
 					int x = r.nextInt(screen.width);
 					int y = r.nextInt(screen.height);
+					if (false == map.contains(x, y))
+						continue;
+					
 					slicePhones.add(new SmartPhone(new Point(x, y), reader
-							.getPoly(), pn, rn));
+							.getPoly(), pn, rn, moveTendenancy, inputFrequency));
 				}
 
 				Slice s = new Slice(slicePhones, controller, row, col);

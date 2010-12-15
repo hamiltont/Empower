@@ -5,9 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
-
 import org.xml.sax.SAXException;
 
 import com.keithpower.gekmlib.Configuration;
@@ -25,14 +22,14 @@ public class KMLReader {
 		return mPoly;
 	}
 
-	public KMLReader() {
+	public KMLReader(File inputFile) {
 		KMLParser parser = new KMLParser();
 		Configuration.properties.setProperty(Configuration.GENERATE_IDS,
 				Configuration.OFF);
 
 		Kml kml;
 		try {
-			kml = parser.parse(new File("va_counties.kml"));
+			kml = parser.parse(inputFile);
 			Document d = kml.getDocument();
 			Feature[] features = d.getFeatures();
 

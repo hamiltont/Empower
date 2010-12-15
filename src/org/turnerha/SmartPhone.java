@@ -16,15 +16,23 @@ public class SmartPhone {
 	private boolean mShouldRemove = false;
 	private PerceivedNetwork mPerceivedNetwork;
 	private RealNetwork mRealNetwork;
+	private float mMoveTendenancy;
+	private float mInputFrequency;
 
-	public SmartPhone(Point p, List<MyPolygon> counties, PerceivedNetwork pn, RealNetwork rn) {
+	public SmartPhone(Point p, List<MyPolygon> counties, PerceivedNetwork pn, RealNetwork rn, float moveTendenancy, float inputFrequency) {
 		mPoint = p;
 		mCounties = counties;
 		mPerceivedNetwork = pn;
 		mRealNetwork = rn;
+		
+		mMoveTendenancy = moveTendenancy;
+		mInputFrequency = inputFrequency;
 	}
 
 	public void move() {
+		if (mRandom.nextFloat() > mMoveTendenancy)
+			return;
+		
 		int xChange = mRandom.nextInt(3);
 		int yChange = mRandom.nextInt(3);
 		boolean xRight = mRandom.nextBoolean();
@@ -42,6 +50,9 @@ public class SmartPhone {
 
 		for (MyPolygon poly : mCounties)
 			if (poly.mPoly.contains(mPoint)) {
+				if (mRandom.nextFloat() > mInputFrequency)
+					return;
+				
 				int rgb = mRealNetwork.getRGBat(mPoint);
 				mPerceivedNetwork.addReading(rgb, mPoint);
 				return;
