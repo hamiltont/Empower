@@ -29,7 +29,7 @@ public class Map extends JPanel {
 	public Map(List<MyPolygon> polys, Dimension screen) {
 		mPixelWidth = screen.width;
 		mPixelHeight = screen.height;
-		
+
 		mPolys = polys;
 
 		setPreferredSize(new Dimension(mPixelWidth, mPixelHeight));
@@ -58,10 +58,10 @@ public class Map extends JPanel {
 
 				xArray[pos] = x;
 				yArray[pos] = y;
-				
-				poly.mPoints.add(new Point(x,y));
+
+				poly.mPoints.add(new Point(x, y));
 				pos++;
-				
+
 			}
 			poly.mPoly = new Polygon(xArray, yArray, xArray.length);
 		}
@@ -74,15 +74,31 @@ public class Map extends JPanel {
 
 		g.setColor(Color.DARK_GRAY);
 
-		for (MyPolygon poly : mPolys)
-		{
+		for (MyPolygon poly : mPolys) {
 			for (int i = 0; i < poly.mPoints.size() - 1; i++) {
 				Point a = poly.mPoints.get(i);
-				Point b = poly.mPoints.get(i+1);
+				Point b = poly.mPoints.get(i + 1);
 				g.drawLine(a.x, a.y, b.x, b.y);
 			}
-			
+
 		}
 
+	}
+
+	public List<MyPolygon> getPolys() {
+		return mPolys;
+	}
+
+	/**
+	 * Returns true if the pixel is contained within the polygons present on
+	 * this map, false otherwise
+	 */
+	public boolean contains(int x, int y) {
+		for (MyPolygon poly : mPolys) {
+			Polygon javaPoly = poly.mPoly;
+			if (javaPoly.contains(x, y))
+				return true;
+		}
+		return false;
 	}
 }

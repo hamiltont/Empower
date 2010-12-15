@@ -24,7 +24,7 @@ import javax.imageio.ImageIO;
 
 import org.jdesktop.swingx.graphics.BlendComposite;
 
-public class Main {
+public class NetworkUtils {
 
 	/**
 	 * @param args
@@ -36,30 +36,33 @@ public class Main {
 
 		BufferedImage fadedCircle = createFadedCircleImage(100);
 		BufferedImage monoImage = createCompatibleTranslucentImage(400, 350);
-        Graphics g = monoImage.getGraphics();
-        g.setColor(Color.WHITE);
-        g.fillRect(0, 0, 400, 350);
+		Graphics g = monoImage.getGraphics();
+		g.setColor(Color.WHITE);
+		g.fillRect(0, 0, 400, 350);
 
-		
 		BufferedImage circledMonochromeImage = addCircleToMonochromeImage(
 				monoImage, fadedCircle, new Point(200, 200));
-		circledMonochromeImage = addCircleToMonochromeImage(
-				monoImage, fadedCircle, new Point(400, 200));
-		circledMonochromeImage = addCircleToMonochromeImage(
-				monoImage, fadedCircle, new Point(200, 300));
-		circledMonochromeImage = addCircleToMonochromeImage(
-				monoImage, fadedCircle, new Point(230, 230));
+		circledMonochromeImage = addCircleToMonochromeImage(monoImage,
+				fadedCircle, new Point(400, 200));
+		circledMonochromeImage = addCircleToMonochromeImage(monoImage,
+				fadedCircle, new Point(200, 300));
+		circledMonochromeImage = addCircleToMonochromeImage(monoImage,
+				fadedCircle, new Point(230, 230));
 
-		BufferedImage gradientImage = createGradientImage(new Dimension(256, 1), Color.WHITE, Color.RED, Color.YELLOW, Color.GREEN.darker(), 
-			    Color.CYAN, Color.BLUE, new Color(0, 0, 0x33));
+		BufferedImage gradientImage = createGradientImage(
+				new Dimension(256, 1), Color.WHITE, Color.RED, Color.YELLOW,
+				Color.GREEN.darker(), Color.CYAN, Color.BLUE, new Color(0, 0,
+						0x33));
 		LookupTable lookupTable = createColorLookupTable(gradientImage, 0.5f);
 		LookupOp colorizeOperation = new LookupOp(lookupTable, null);
-		
-		BufferedImage heatMap = colorizeOperation.filter(circledMonochromeImage, null);
-		
+
+		BufferedImage heatMap = colorizeOperation.filter(
+				circledMonochromeImage, null);
+
 		try {
 			ImageIO.write(fadedCircle, "png", new File("faded-circle.png"));
-			ImageIO.write(circledMonochromeImage, "png", new File("circled-mono.png"));
+			ImageIO.write(circledMonochromeImage, "png", new File(
+					"circled-mono.png"));
 			ImageIO.write(gradientImage, "png", new File("gradient.png"));
 			ImageIO.write(heatMap, "png", new File("heatmap.png"));
 		} catch (IOException e) {
@@ -106,13 +109,21 @@ public class Main {
 		g.setComposite(BlendComposite.Multiply.derive(alpha));
 		g.drawImage(dotImage, null, p.x - circleRadius, p.y - circleRadius);
 
-		//g.dispose();
-		
+		// g.dispose();
+
 		return monochromeImage;
 	}
 
 	public static BufferedImage createGradientImage(Dimension size,
 			Color... colors) {
+
+		if (size == null)
+			size = new Dimension(256, 1);
+		if (colors == null)
+			colors = new Color[] { Color.WHITE, Color.RED, Color.YELLOW,
+					Color.GREEN.darker(), Color.CYAN, Color.BLUE,
+					new Color(0, 0, 0x33) };
+
 		BufferedImage im = createCompatibleTranslucentImage(size.width,
 				size.height);
 		Graphics2D g = im.createGraphics();

@@ -6,6 +6,8 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -14,6 +16,8 @@ import javax.swing.JLayeredPane;
 
 import org.turnerha.map.KMLReader;
 import org.turnerha.map.Map;
+import org.turnerha.network.NetworkUtils;
+import org.turnerha.network.RealNetwork;
 
 public class Main {
 
@@ -43,7 +47,7 @@ public class Main {
 		foo.height -= 25;
 		Map map = new Map(reader.getPoly(), foo);
 		map.setBounds(0, 0, foo.width, foo.height);
-		
+
 		// Create ModelFrontBuffer
 		ModelProxy proxy = new ModelProxy(rows, columns);
 
@@ -60,7 +64,8 @@ public class Main {
 				int o : Util.range(phonesPerSlice)) {
 					int x = r.nextInt(screen.width);
 					int y = r.nextInt(screen.height);
-					slicePhones.add(new SmartPhone(new Point(x, y), reader.getPoly()));
+					slicePhones.add(new SmartPhone(new Point(x, y), reader
+							.getPoly()));
 				}
 
 				Slice s = new Slice(slicePhones, controller, row, col);
@@ -83,18 +88,19 @@ public class Main {
 		// Setup the UI and start the display
 		JFrame frame = new JFrame();
 		frame.setSize(screen);
+		frame.setLayout(null);
+		
+		BufferedImage colorScheme = NetworkUtils
+				.createGradientImage(null, null);
+		RealNetwork rn = new RealNetwork(
+				new File("network-images/network2.png"), screen, colorScheme,
+				0.5f, map);
 
-		JLayeredPane layeredPane = new JLayeredPane();
-		layeredPane.setSize(screen);
-
-		ModelView view = new ModelView(proxy, controller);
+		ModelView view = new ModelView(proxy, controller, map, rn);
 		view.setBounds(0, 0, screen.width, screen.height);
-		layeredPane.add(view, JLayeredPane.PALETTE_LAYER);
-
-		layeredPane.add(map, JLayeredPane.DEFAULT_LAYER);
 
 
-		frame.add(layeredPane);
+		frame.add(view);
 		frame.validate();
 		frame.setVisible(true);
 	}

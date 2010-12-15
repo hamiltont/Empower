@@ -7,6 +7,9 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.turnerha.map.Map;
+import org.turnerha.network.RealNetwork;
+
 @SuppressWarnings( { "serial" })
 class ModelView extends Component {
 
@@ -17,10 +20,16 @@ class ModelView extends Component {
 			.brighter().brighter().brighter().brighter();
 	private ModelController controller_;
 	
-	public ModelView(ModelProxy proxy, ModelController cont) {
+	private Map mMap;
+	private RealNetwork mRealNetwork;
+	
+	public ModelView(ModelProxy proxy, ModelController cont, Map m, RealNetwork rn) {
 		this.proxy = proxy;
 		controller_ = cont;
 
+		mMap = m;
+		mRealNetwork = rn;
+		
 		// If our parent does not set our size, then we should do it manually
 		//Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 		//setPreferredSize(screen);
@@ -50,6 +59,8 @@ class ModelView extends Component {
 		long start = System.nanoTime();
 		calculateFrameRate();
 
+		mMap.paint(g);
+		
 		// Set Alpha. 0.0f is 100% transparent and 1.0f is 100% opaque.
 		g.setColor(mStaticPoint);
 
@@ -83,7 +94,11 @@ class ModelView extends Component {
 		} finally {
 			proxy.modelLock.unlock();
 		}
-
+		
+		
+		mRealNetwork.paint(g);
+		
+		
 		if (frameCount == FRAMES) {
 			long timeInMilliSec = totalTime / 1000000;
 			double framesInMilliSeconds = (double) FRAMES
