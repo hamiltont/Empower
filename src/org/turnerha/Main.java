@@ -17,6 +17,7 @@ import javax.swing.JLayeredPane;
 import org.turnerha.map.KMLReader;
 import org.turnerha.map.Map;
 import org.turnerha.network.NetworkUtils;
+import org.turnerha.network.PerceivedNetwork;
 import org.turnerha.network.RealNetwork;
 
 public class Main {
@@ -47,6 +48,9 @@ public class Main {
 		foo.height -= 25;
 		Map map = new Map(reader.getPoly(), foo);
 		map.setBounds(0, 0, foo.width, foo.height);
+		
+		// Create perceived Network
+		PerceivedNetwork pn = new PerceivedNetwork(screen, map);
 
 		// Create ModelFrontBuffer
 		ModelProxy proxy = new ModelProxy(rows, columns);
@@ -65,7 +69,7 @@ public class Main {
 					int x = r.nextInt(screen.width);
 					int y = r.nextInt(screen.height);
 					slicePhones.add(new SmartPhone(new Point(x, y), reader
-							.getPoly()));
+							.getPoly(), pn));
 				}
 
 				Slice s = new Slice(slicePhones, controller, row, col);
@@ -96,7 +100,7 @@ public class Main {
 				new File("network-images/network2.png"), screen, colorScheme,
 				0.5f, map);
 
-		ModelView view = new ModelView(proxy, controller, map, rn);
+		ModelView view = new ModelView(proxy, controller, map, pn);
 		view.setBounds(0, 0, screen.width, screen.height);
 
 

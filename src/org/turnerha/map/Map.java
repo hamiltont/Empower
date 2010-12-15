@@ -85,19 +85,27 @@ public class Map extends JPanel {
 
 	}
 
-	public List<MyPolygon> getPolys() {
-		return mPolys;
+	public Point convert(float lat, float lon) {
+		return null;
 	}
 
 	/**
 	 * Returns true if the pixel is contained within the polygons present on
 	 * this map, false otherwise
 	 */
+	private Polygon lastPoly = null;
+
 	public boolean contains(int x, int y) {
+		if (lastPoly != null)
+			if (lastPoly.contains(x, y))
+				return true;
+
 		for (MyPolygon poly : mPolys) {
 			Polygon javaPoly = poly.mPoly;
-			if (javaPoly.contains(x, y))
+			if (javaPoly.contains(x, y)) {
+				lastPoly = javaPoly;
 				return true;
+			}
 		}
 		return false;
 	}

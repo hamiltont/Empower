@@ -14,8 +14,7 @@ import javax.swing.JPanel;
 
 import org.turnerha.map.Map;
 
-@SuppressWarnings("serial")
-public class RealNetwork extends JPanel {
+public class RealNetwork extends Network {
 	BufferedImage mRealNetwork;
 
 	/* Create a rescale filter op that makes the image 50% opaque */
@@ -52,9 +51,6 @@ public class RealNetwork extends JPanel {
 			e.printStackTrace();
 		}
 
-		// We are inside a layered pane, set ourselves up
-		setSize(size);
-		setLocation(0, 0);
 	}
 
 	private void removePixelsNotInPolys(BufferedImage network, Map map) {
@@ -68,7 +64,6 @@ public class RealNetwork extends JPanel {
 
 	}
 
-	@Override
 	public void paint(Graphics g) {
 		Graphics2D g2d = (Graphics2D) g;
 

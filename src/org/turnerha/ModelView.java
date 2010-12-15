@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.turnerha.map.Map;
+import org.turnerha.network.Network;
 import org.turnerha.network.RealNetwork;
 
 @SuppressWarnings( { "serial" })
@@ -21,14 +22,14 @@ class ModelView extends Component {
 	private ModelController controller_;
 	
 	private Map mMap;
-	private RealNetwork mRealNetwork;
+	private Network mNetwork;
 	
-	public ModelView(ModelProxy proxy, ModelController cont, Map m, RealNetwork rn) {
+	public ModelView(ModelProxy proxy, ModelController cont, Map m, Network rn) {
 		this.proxy = proxy;
 		controller_ = cont;
 
 		mMap = m;
-		mRealNetwork = rn;
+		mNetwork = rn;
 		
 		// If our parent does not set our size, then we should do it manually
 		//Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
@@ -96,7 +97,7 @@ class ModelView extends Component {
 		}
 		
 		
-		mRealNetwork.paint(g);
+		mNetwork.paint(g);
 		
 		
 		if (frameCount == FRAMES) {
