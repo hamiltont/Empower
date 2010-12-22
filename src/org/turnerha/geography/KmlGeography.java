@@ -7,11 +7,8 @@ import java.awt.Point;
 import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
-import javax.swing.JPanel;
-
-public class KmlPanel extends JPanel {
+public class KmlGeography {
 
 	private List<MyPolygon> mPolys;
 
@@ -26,7 +23,7 @@ public class KmlPanel extends JPanel {
 	private static int mPixelWidth = 1400;
 	private static int mPixelHeight = 850;
 
-	public KmlPanel(List<MyPolygon> polys, Dimension screen, DoublePoint tr, DoublePoint bl) {
+	public KmlGeography(List<MyPolygon> polys, Dimension screen, DoublePoint tr, DoublePoint bl) {
 		topRight = tr;
 		botLeft = bl;
 		latDifference = topRight.lat - botLeft.lat;
@@ -36,9 +33,7 @@ public class KmlPanel extends JPanel {
 		mPixelHeight = screen.height;
 
 		mPolys = polys;
-
-		setPreferredSize(new Dimension(mPixelWidth, mPixelHeight));
-
+		
 		for (MyPolygon poly : polys) {
 			poly.mPoints = new ArrayList<Point>(poly.mLocations.size());
 			int[] xArray = new int[poly.mLocations.size()];
@@ -72,7 +67,6 @@ public class KmlPanel extends JPanel {
 		}
 	}
 
-	@Override
 	public void paint(Graphics g) {
 		g.setColor(Color.black);
 		g.fillRect(0, 0, mPixelWidth, mPixelHeight);

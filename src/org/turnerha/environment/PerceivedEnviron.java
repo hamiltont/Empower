@@ -28,7 +28,7 @@ import java.util.HashMap;
 import javax.imageio.ImageIO;
 
 import org.jdesktop.swingx.graphics.BlendComposite;
-import org.turnerha.geography.KmlPanel;
+import org.turnerha.geography.KmlGeography;
 
 public class PerceivedEnviron extends Environment {
 	BufferedImage mNetworkBlackWhite;
@@ -45,7 +45,7 @@ public class PerceivedEnviron extends Environment {
 	RescaleOp mRealpha = new RescaleOp(scales, offsets, null);
 
 
-	public PerceivedEnviron(Dimension size, KmlPanel m) {
+	public PerceivedEnviron(Dimension size, KmlGeography m) {
 
 		mNetworkBlackWhite = createCompatibleTranslucentImage(size.width,
 				size.height);

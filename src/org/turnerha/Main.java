@@ -17,7 +17,7 @@ import org.turnerha.environment.EnvironUtils;
 import org.turnerha.environment.PerceivedEnviron;
 import org.turnerha.environment.RealEnviron;
 import org.turnerha.geography.KmlReader;
-import org.turnerha.geography.KmlPanel;
+import org.turnerha.geography.KmlGeography;
 
 public class Main {
 
@@ -25,7 +25,7 @@ public class Main {
 	public static int rows = 1; // Do not change this unless you are sure
 	public static int columns = 1; // you can share Smart-phones between models
 	public static int phonesPerSlice = 2000;
-	
+
 	ModelView mModelView;
 	RealEnviron mRealNetwork;
 	PerceivedEnviron mPerceivedNetwork;
@@ -35,7 +35,7 @@ public class Main {
 			float inputFrequency, boolean usingGPS) {
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 		screen.height -= 20;
-		
+
 		hoursPerHeartbeat = timePerHeartbeat;
 
 		Random r = new Random();
@@ -44,18 +44,18 @@ public class Main {
 		KmlReader reader = new KmlReader(geoFileNameKml);
 		Dimension foo = new Dimension(screen);
 		foo.height -= 25;
-		KmlPanel kmlPanel = new KmlPanel(reader.getPoly(), foo, reader.mTopRight, reader.mBottomLeft);
-		kmlPanel.setBounds(0, 0, foo.width, foo.height);
+		KmlGeography kmlGeography = new KmlGeography(reader.getPoly(), foo,
+				reader.mTopRight, reader.mBottomLeft);
 
 		// Create perceived Environment
-		PerceivedEnviron pn = new PerceivedEnviron(screen, kmlPanel);
+		PerceivedEnviron pn = new PerceivedEnviron(screen, kmlGeography);
 		mPerceivedNetwork = pn;
 
 		// Create real network
 		BufferedImage colorScheme = EnvironUtils
 				.createGradientImage(null, null);
 		RealEnviron rn = new RealEnviron(networkFileName, screen, colorScheme,
-				0.5f, kmlPanel);
+				0.5f, kmlGeography);
 		mRealNetwork = rn;
 
 		// Create ModelFrontBuffer
@@ -74,11 +74,13 @@ public class Main {
 				int o : Util.range(phonesPerSlice)) {
 					int x = r.nextInt(screen.width);
 					int y = r.nextInt(screen.height);
-					if (false == kmlPanel.contains(x, y))
+					if (false == kmlGeography.contains(x, y))
 						continue;
-					
-					slicePhones.add(new SmartPhone(new Point(x, y), reader
-							.getPoly(), pn, rn, moveTendenancy, inputFrequency));
+
+					slicePhones
+							.add(new SmartPhone(new Point(x, y), reader
+									.getPoly(), pn, rn, moveTendenancy,
+									inputFrequency));
 				}
 
 				Slice s = new Slice(slicePhones, controller, row, col);
@@ -103,7 +105,7 @@ public class Main {
 		frame.setSize(screen);
 		frame.setLayout(null);
 
-		ModelView view = new ModelView(proxy, controller, kmlPanel, pn);
+		ModelView view = new ModelView(proxy, controller, kmlGeography, pn, rn);
 		mModelView = view;
 		view.setBounds(0, 0, screen.width, screen.height);
 
@@ -139,21 +141,21 @@ public class Main {
 
 				mc.sleepTime.addAndGet(speedFactor);
 				return true;
-				
+
 			case KeyEvent.VK_P:
 				// Means switch to perceived network
-				mModelView.setNetwork(mPerceivedNetwork);
+				mModelView.setDisplayNetwork(mPerceivedNetwork);
 				return true;
-				
+
 			case KeyEvent.VK_R:
 				// Means switch to real network
-				mModelView.setNetwork(mRealNetwork);
+				mModelView.setDisplayNetwork(mRealNetwork);
 				return true;
-				
+
 			case KeyEvent.VK_ESCAPE:
 				// Means quit
 				System.exit(0);
-				
+
 			}
 
 			return false;

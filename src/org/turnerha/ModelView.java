@@ -9,7 +9,8 @@ import java.util.List;
 
 import org.turnerha.environment.Environment;
 import org.turnerha.environment.PerceivedEnviron;
-import org.turnerha.geography.KmlPanel;
+import org.turnerha.environment.RealEnviron;
+import org.turnerha.geography.KmlGeography;
 
 @SuppressWarnings( { "serial" })
 class ModelView extends Component {
@@ -21,12 +22,14 @@ class ModelView extends Component {
 			.brighter().brighter().brighter().brighter();
 	private ModelController controller_;
 
-	private KmlPanel mMap;
+	private KmlGeography mMap;
 	private Environment mNetwork;
+	private RealEnviron mRealEnviron;
 
-	public ModelView(ModelProxy proxy, ModelController cont, KmlPanel m, Environment rn) {
+	public ModelView(ModelProxy proxy, ModelController cont, KmlGeography m, Environment rn, RealEnviron realEnviron) {
 		this.proxy = proxy;
 		controller_ = cont;
+		mRealEnviron = realEnviron;
 
 		mMap = m;
 		mNetwork = rn;
@@ -84,6 +87,9 @@ class ModelView extends Component {
 
 			g.setColor(Color.white);
 			g.drawString("Heartbeats: " + proxy.getFrameCount(), 10, 40);
+				
+			if (proxy.getFrameCount() == 200)
+				mRealEnviron.loadNewEnvironment("foo");
 
 			long timeInMs = Math.round(Main.hoursPerHeartbeat * 60f * 1000f)
 					* proxy.getFrameCount();
@@ -131,8 +137,9 @@ class ModelView extends Component {
 		g.drawString("Press (esc) to quit", 10, 145);
 	}
 	
-	public void setNetwork(Environment n) {
+	public void setDisplayNetwork(Environment n) {
 		mNetwork = n;
+		
 	}
 
 	private void calculateFrameRate() {
