@@ -1,8 +1,8 @@
-package org.turnerha.network;
+package org.turnerha.environment;
 
 import java.awt.Graphics;
 
-public abstract class Network {
+public abstract class Environment {
 
 	public abstract void paint(Graphics g);
 }

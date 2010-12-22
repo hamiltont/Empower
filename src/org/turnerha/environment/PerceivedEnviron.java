@@ -1,4 +1,4 @@
-package org.turnerha.network;
+package org.turnerha.environment;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -28,9 +28,9 @@ import java.util.HashMap;
 import javax.imageio.ImageIO;
 
 import org.jdesktop.swingx.graphics.BlendComposite;
-import org.turnerha.map.Map;
+import org.turnerha.geography.KmlPanel;
 
-public class PerceivedNetwork extends Network {
+public class PerceivedEnviron extends Environment {
 	BufferedImage mNetworkBlackWhite;
 
 	//BufferedImage mReading;
@@ -45,7 +45,7 @@ public class PerceivedNetwork extends Network {
 	RescaleOp mRealpha = new RescaleOp(scales, offsets, null);
 
 
-	public PerceivedNetwork(Dimension size, Map m) {
+	public PerceivedEnviron(Dimension size, KmlPanel m) {
 
 		mNetworkBlackWhite = createCompatibleTranslucentImage(size.width,
 				size.height);
@@ -56,9 +56,9 @@ public class PerceivedNetwork extends Network {
 
 		//mReading = createFadedCircleImage(10);
 
-		BufferedImage gradient = NetworkUtils.createGradientImage(null, null);
+		BufferedImage gradient = EnvironUtils.createGradientImage(null, null);
 
-		LookupTable lookupTable = NetworkUtils.createColorLookupTable(gradient, 0.5f);
+		LookupTable lookupTable = EnvironUtils.createColorLookupTable(gradient, 0.5f);
 		mColorize = new LookupOp(lookupTable, null);
 	}
 

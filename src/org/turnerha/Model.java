@@ -11,9 +11,9 @@ public class Model {
 	
 	private long secondsPerFrame = 60;
 	
-	// Real Network Picture
+	// Real Environment Picture
 	
-	// Detected Network Picture
+	// Detected Environment Picture
 	
 	// Conformance percentage
 	

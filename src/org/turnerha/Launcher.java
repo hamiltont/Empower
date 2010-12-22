@@ -69,7 +69,7 @@ public class Launcher {
 		inputs.add(new JLabel("Location Accuracy"));
 		JPanel btns = new JPanel();
 		JRadioButton gps = new JRadioButton("GPS");
-		JRadioButton network = new JRadioButton("Network");
+		JRadioButton network = new JRadioButton("Environment");
 		mLocationAccuracy.add(gps);
 		mLocationAccuracy.add(network);
 		gps.setSelected(true);

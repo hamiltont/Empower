@@ -1,4 +1,4 @@
-package org.turnerha.network;
+package org.turnerha.environment;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -22,7 +22,7 @@ public class Loader {
 		try {
 			colorImage = ImageIO.read(new File("network-images/network1.png"));
 
-			BufferedImage gradient = NetworkUtils.createGradientImage(new Dimension(
+			BufferedImage gradient = EnvironUtils.createGradientImage(new Dimension(
 					256, 1), Color.WHITE, Color.RED, Color.YELLOW, Color.GREEN
 					.darker(), Color.CYAN, Color.BLUE, new Color(0, 0, 0x33));
 
@@ -55,7 +55,7 @@ public class Loader {
 		g.drawImage(image, 0, 0, null);
 		g.dispose();
 
-		LookupTable lookupTable = NetworkUtils.createColorLookupTable(gradient, 1f);
+		LookupTable lookupTable = EnvironUtils.createColorLookupTable(gradient, 1f);
 		LookupOp colorizeOperation = new LookupOp(lookupTable, null);
 
 		BufferedImage colored = colorizeOperation.filter(rgbGrayscale, null);

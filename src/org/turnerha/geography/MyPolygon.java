@@ -1,4 +1,4 @@
-package org.turnerha.map;
+package org.turnerha.geography;
 
 import java.awt.Point;
 import java.awt.Polygon;

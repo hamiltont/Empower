@@ -7,9 +7,9 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.turnerha.map.Map;
-import org.turnerha.network.Network;
-import org.turnerha.network.PerceivedNetwork;
+import org.turnerha.environment.Environment;
+import org.turnerha.environment.PerceivedEnviron;
+import org.turnerha.geography.KmlPanel;
 
 @SuppressWarnings( { "serial" })
 class ModelView extends Component {
@@ -21,10 +21,10 @@ class ModelView extends Component {
 			.brighter().brighter().brighter().brighter();
 	private ModelController controller_;
 
-	private Map mMap;
-	private Network mNetwork;
+	private KmlPanel mMap;
+	private Environment mNetwork;
 
-	public ModelView(ModelProxy proxy, ModelController cont, Map m, Network rn) {
+	public ModelView(ModelProxy proxy, ModelController cont, KmlPanel m, Environment rn) {
 		this.proxy = proxy;
 		controller_ = cont;
 
@@ -123,15 +123,15 @@ class ModelView extends Component {
 		g.drawString("Accuracy within coverage: xx%", 10, 100);
 		g.drawString("Accuracy total: xx%", 10, 115);
 
-		if (mNetwork instanceof PerceivedNetwork)
-			g.drawString("Viewing Perceived Network (Press R to change)", 10, 130);
+		if (mNetwork instanceof PerceivedEnviron)
+			g.drawString("Viewing Perceived Environment (Press R to change)", 10, 130);
 		else
-			g.drawString("Viewing Perceived Network (Press P to change)", 10, 130);
+			g.drawString("Viewing Perceived Environment (Press P to change)", 10, 130);
 		
 		g.drawString("Press (esc) to quit", 10, 145);
 	}
 	
-	public void setNetwork(Network n) {
+	public void setNetwork(Environment n) {
 		mNetwork = n;
 	}
 

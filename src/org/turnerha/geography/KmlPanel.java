@@ -1,4 +1,4 @@
-package org.turnerha.map;
+package org.turnerha.geography;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -11,7 +11,7 @@ import java.util.Set;
 
 import javax.swing.JPanel;
 
-public class Map extends JPanel {
+public class KmlPanel extends JPanel {
 
 	private List<MyPolygon> mPolys;
 
@@ -26,7 +26,7 @@ public class Map extends JPanel {
 	private static int mPixelWidth = 1400;
 	private static int mPixelHeight = 850;
 
-	public Map(List<MyPolygon> polys, Dimension screen, DoublePoint tr, DoublePoint bl) {
+	public KmlPanel(List<MyPolygon> polys, Dimension screen, DoublePoint tr, DoublePoint bl) {
 		topRight = tr;
 		botLeft = bl;
 		latDifference = topRight.lat - botLeft.lat;

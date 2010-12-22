@@ -1,4 +1,4 @@
-package org.turnerha.map;
+package org.turnerha.geography;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,7 +14,7 @@ import com.keithpower.gekmlib.KMLParser;
 import com.keithpower.gekmlib.Kml;
 import com.keithpower.gekmlib.Placemark;
 
-public class KMLReader {
+public class KmlReader {
 
 	private List<MyPolygon> mPoly;
 	public DoublePoint mTopRight;
@@ -24,7 +24,7 @@ public class KMLReader {
 		return mPoly;
 	}
 
-	public KMLReader(File inputFile) {
+	public KmlReader(File inputFile) {
 		KMLParser parser = new KMLParser();
 		Configuration.properties.setProperty(Configuration.GENERATE_IDS,
 				Configuration.OFF);

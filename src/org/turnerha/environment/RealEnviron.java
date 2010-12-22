@@ -1,4 +1,4 @@
-package org.turnerha.network;
+package org.turnerha.environment;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -11,9 +11,9 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
-import org.turnerha.map.Map;
+import org.turnerha.geography.KmlPanel;
 
-public class RealNetwork extends Network {
+public class RealEnviron extends Environment {
 	BufferedImage mRealNetwork;
 
 	/* Create a rescale filter op that makes the image 50% opaque */
@@ -27,8 +27,8 @@ public class RealNetwork extends Network {
 	 * @param size
 	 *            The size this JPanel should make itself
 	 */
-	public RealNetwork(File realNetworkFile, Dimension size,
-			BufferedImage colorScheme, float alpha, Map map) {
+	public RealEnviron(File realNetworkFile, Dimension size,
+			BufferedImage colorScheme, float alpha, KmlPanel kmlPanel) {
 		try {
 			BufferedImage temp = ImageIO.read(realNetworkFile);
 
@@ -41,7 +41,7 @@ public class RealNetwork extends Network {
 
 			mRealNetwork = Loader.convertColorScheme(mRealNetwork, colorScheme);
 
-			removePixelsNotInPolys(mRealNetwork, map);
+			removePixelsNotInPolys(mRealNetwork, kmlPanel);
 
 			if (alpha > 0f && alpha < 1.0f)
 				scales[3] = alpha;
@@ -52,12 +52,12 @@ public class RealNetwork extends Network {
 
 	}
 
-	private void removePixelsNotInPolys(BufferedImage network, Map map) {
+	private void removePixelsNotInPolys(BufferedImage network, KmlPanel kmlPanel) {
 
 		// Iterate over all pixels, check that they are within the polys
 		for (int x = 0; x < network.getWidth(); x++)
 			for (int y = 0; y < network.getHeight(); y++) {
-				if (false == map.contains(x, y))
+				if (false == kmlPanel.contains(x, y))
 					network.setRGB(x, y, 0);
 			}
 

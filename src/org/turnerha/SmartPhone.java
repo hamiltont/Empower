@@ -4,9 +4,9 @@ import java.awt.Point;
 import java.util.List;
 import java.util.Random;
 
-import org.turnerha.map.MyPolygon;
-import org.turnerha.network.PerceivedNetwork;
-import org.turnerha.network.RealNetwork;
+import org.turnerha.environment.PerceivedEnviron;
+import org.turnerha.environment.RealEnviron;
+import org.turnerha.geography.MyPolygon;
 
 public class SmartPhone {
 
@@ -14,12 +14,12 @@ public class SmartPhone {
 	private Random mRandom = new Random();
 	private List<MyPolygon> mCounties;
 	private boolean mShouldRemove = false;
-	private PerceivedNetwork mPerceivedNetwork;
-	private RealNetwork mRealNetwork;
+	private PerceivedEnviron mPerceivedNetwork;
+	private RealEnviron mRealNetwork;
 	private float mMoveTendenancy;
 	private float mInputFrequency;
 
-	public SmartPhone(Point p, List<MyPolygon> counties, PerceivedNetwork pn, RealNetwork rn, float moveTendenancy, float inputFrequency) {
+	public SmartPhone(Point p, List<MyPolygon> counties, PerceivedEnviron pn, RealEnviron rn, float moveTendenancy, float inputFrequency) {
 		mPoint = p;
 		mCounties = counties;
 		mPerceivedNetwork = pn;

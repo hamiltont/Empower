@@ -1,4 +1,4 @@
-package org.turnerha.network;
+package org.turnerha.environment;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -24,7 +24,7 @@ import javax.imageio.ImageIO;
 
 import org.jdesktop.swingx.graphics.BlendComposite;
 
-public class NetworkUtils {
+public class EnvironUtils {
 
 	/**
 	 * @param args

@@ -13,11 +13,11 @@ import java.util.Random;
 
 import javax.swing.JFrame;
 
-import org.turnerha.map.KMLReader;
-import org.turnerha.map.Map;
-import org.turnerha.network.NetworkUtils;
-import org.turnerha.network.PerceivedNetwork;
-import org.turnerha.network.RealNetwork;
+import org.turnerha.environment.EnvironUtils;
+import org.turnerha.environment.PerceivedEnviron;
+import org.turnerha.environment.RealEnviron;
+import org.turnerha.geography.KmlReader;
+import org.turnerha.geography.KmlPanel;
 
 public class Main {
 
@@ -27,8 +27,8 @@ public class Main {
 	public static int phonesPerSlice = 2000;
 	
 	ModelView mModelView;
-	RealNetwork mRealNetwork;
-	PerceivedNetwork mPerceivedNetwork;
+	RealEnviron mRealNetwork;
+	PerceivedEnviron mPerceivedNetwork;
 
 	public Main(File geoFileNameKml, File networkFileName,
 			float moveTendenancy, int mobilityInMeters, float timePerHeartbeat,
@@ -41,21 +41,21 @@ public class Main {
 		Random r = new Random();
 
 		// Read in KML and create map - it has no dependencies
-		KMLReader reader = new KMLReader(geoFileNameKml);
+		KmlReader reader = new KmlReader(geoFileNameKml);
 		Dimension foo = new Dimension(screen);
 		foo.height -= 25;
-		Map map = new Map(reader.getPoly(), foo, reader.mTopRight, reader.mBottomLeft);
-		map.setBounds(0, 0, foo.width, foo.height);
+		KmlPanel kmlPanel = new KmlPanel(reader.getPoly(), foo, reader.mTopRight, reader.mBottomLeft);
+		kmlPanel.setBounds(0, 0, foo.width, foo.height);
 
-		// Create perceived Network
-		PerceivedNetwork pn = new PerceivedNetwork(screen, map);
+		// Create perceived Environment
+		PerceivedEnviron pn = new PerceivedEnviron(screen, kmlPanel);
 		mPerceivedNetwork = pn;
 
 		// Create real network
-		BufferedImage colorScheme = NetworkUtils
+		BufferedImage colorScheme = EnvironUtils
 				.createGradientImage(null, null);
-		RealNetwork rn = new RealNetwork(networkFileName, screen, colorScheme,
-				0.5f, map);
+		RealEnviron rn = new RealEnviron(networkFileName, screen, colorScheme,
+				0.5f, kmlPanel);
 		mRealNetwork = rn;
 
 		// Create ModelFrontBuffer
@@ -74,7 +74,7 @@ public class Main {
 				int o : Util.range(phonesPerSlice)) {
 					int x = r.nextInt(screen.width);
 					int y = r.nextInt(screen.height);
-					if (false == map.contains(x, y))
+					if (false == kmlPanel.contains(x, y))
 						continue;
 					
 					slicePhones.add(new SmartPhone(new Point(x, y), reader
@@ -103,7 +103,7 @@ public class Main {
 		frame.setSize(screen);
 		frame.setLayout(null);
 
-		ModelView view = new ModelView(proxy, controller, map, pn);
+		ModelView view = new ModelView(proxy, controller, kmlPanel, pn);
 		mModelView = view;
 		view.setBounds(0, 0, screen.width, screen.height);
 
