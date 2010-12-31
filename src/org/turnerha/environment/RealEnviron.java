@@ -13,7 +13,7 @@ import javax.imageio.ImageIO;
 
 import org.turnerha.geography.KmlGeography;
 
-public class RealEnviron extends Environment {
+public class RealEnviron implements Environment {
 	BufferedImage mRealEnviron;
 
 	/** A rescale filter operation that makes the image somewhat transparent */
@@ -56,7 +56,7 @@ public class RealEnviron extends Environment {
 
 		loadNewEnvironment(realEnvironmentFile);
 	}
-	
+
 	public void loadNewEnvironment(String filename) {
 		File f = new File("network-images/network3.png");
 		loadNewEnvironment(f);
@@ -99,15 +99,25 @@ public class RealEnviron extends Environment {
 
 	}
 
-	public int getRGBat(Point p) {
-		return mRealEnviron.getRGB(p.x, p.y);
-	}
-
+	@Override
 	public void paint(Graphics g) {
 		Graphics2D g2d = (Graphics2D) g;
 
 		/* Draw the image, applying the alpha filter */
 		g2d.drawImage(mRealEnviron, mRealpha, 0, 0);
+	}
+
+	@Override
+	public int getValue(int x, int y) {
+		return mRealEnviron.getRGB(x, y);
+	}
+
+	@Override
+	public Dimension getSize() {
+		int w = mRealEnviron.getWidth();
+		int h = mRealEnviron.getHeight();
+
+		return new Dimension(w, h);
 	}
 
 }

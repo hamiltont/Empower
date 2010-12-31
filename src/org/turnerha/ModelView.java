@@ -88,8 +88,8 @@ class ModelView extends Component {
 			g.setColor(Color.white);
 			g.drawString("Heartbeats: " + proxy.getFrameCount(), 10, 40);
 				
-			if (proxy.getFrameCount() == 200)
-				mRealEnviron.loadNewEnvironment("foo");
+			//if (proxy.getFrameCount() == 200)
+			//	mRealEnviron.loadNewEnvironment("foo");
 
 			long timeInMs = Math.round(Main.hoursPerHeartbeat * 60f * 1000f)
 					* proxy.getFrameCount();

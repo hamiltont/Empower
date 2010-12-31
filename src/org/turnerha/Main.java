@@ -1,9 +1,11 @@
 package org.turnerha;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
@@ -16,19 +18,21 @@ import javax.swing.JFrame;
 import org.turnerha.environment.EnvironUtils;
 import org.turnerha.environment.PerceivedEnviron;
 import org.turnerha.environment.RealEnviron;
-import org.turnerha.geography.KmlReader;
 import org.turnerha.geography.KmlGeography;
+import org.turnerha.geography.KmlReader;
 
 public class Main {
 
 	public static float hoursPerHeartbeat = 1000;
 	public static int rows = 1; // Do not change this unless you are sure
 	public static int columns = 1; // you can share Smart-phones between models
-	public static int phonesPerSlice = 2000;
+	public static int phonesPerSlice = 200;
 
 	ModelView mModelView;
 	RealEnviron mRealNetwork;
 	PerceivedEnviron mPerceivedNetwork;
+
+	private KmlGeography mKmlGeography;
 
 	public Main(File geoFileNameKml, File networkFileName,
 			float moveTendenancy, int mobilityInMeters, float timePerHeartbeat,
@@ -46,6 +50,7 @@ public class Main {
 		foo.height -= 25;
 		KmlGeography kmlGeography = new KmlGeography(reader.getPoly(), foo,
 				reader.mTopRight, reader.mBottomLeft);
+		mKmlGeography = kmlGeography;
 
 		// Create perceived Environment
 		PerceivedEnviron pn = new PerceivedEnviron(screen, kmlGeography);
@@ -57,6 +62,8 @@ public class Main {
 		RealEnviron rn = new RealEnviron(networkFileName, screen, colorScheme,
 				0.5f, kmlGeography);
 		mRealNetwork = rn;
+
+		calculateAccuracy(rn, pn, kmlGeography);
 
 		// Create ModelFrontBuffer
 		ModelProxy proxy = new ModelProxy(rows, columns);
@@ -70,12 +77,12 @@ public class Main {
 			for (int col : Util.range(columns)) {
 				ArrayList<SmartPhone> slicePhones = new ArrayList<SmartPhone>();
 
-				for (@SuppressWarnings("unused")
-				int o : Util.range(phonesPerSlice)) {
-					int x = r.nextInt(screen.width);
-					int y = r.nextInt(screen.height);
-					if (false == kmlGeography.contains(x, y))
-						continue;
+				for (int o : Util.range(phonesPerSlice)) {
+					int x, y;
+					do {
+						x = r.nextInt(screen.width);
+						y = r.nextInt(screen.height);
+					} while (false == kmlGeography.contains(x, y));
 
 					slicePhones
 							.add(new SmartPhone(new Point(x, y), reader
@@ -156,10 +163,80 @@ public class Main {
 				// Means quit
 				System.exit(0);
 
+			case KeyEvent.VK_A:
+				// Calculate accuracy and write out
+				calculateAccuracy(mRealNetwork, mPerceivedNetwork,
+						mKmlGeography);
+				return true;
+
 			}
 
 			return false;
 		}
 
+	}
+
+	private static double maxDifference = 0;
+	
+	private static void calculateAccuracy(RealEnviron re, PerceivedEnviron pe,
+			KmlGeography kml) {
+		Dimension size = re.getSize();
+
+		// Change all white pixels to black
+		BufferedImage colorCorrectedEnviron = pe.generateForAccuracyCheck();
+
+		// Tally up the differences b/w real and perceived
+		double currentDifference = 0;
+		for (int x = 0; x < size.width; x++)
+			for (int y = 0; y < size.height; y++) {
+
+				if (false == kml.contains(x, y))
+					continue;
+
+				int r = re.getValue(x, y);
+				int p = colorCorrectedEnviron.getRGB(x, y);
+				currentDifference += findDistance(r, p);
+			}
+		System.out.println("Perceived Difference is " + currentDifference);
+
+		// Find the maximum difference
+		if (maxDifference == 0)
+			maxDifference = currentDifference;
+		System.out.println("Max Difference is " + maxDifference);
+
+		// Find the total accuracy by calculating the amount that is correct
+		// over the total amount
+		double accuracy = (maxDifference - currentDifference) / maxDifference;
+		System.out.println("Accuracy is " + accuracy);
+	}
+	
+	private static double findDistance(int pixel, int pixel1) {
+		int red = (pixel >> 16) & 0xff;
+		int green = (pixel >> 8) & 0xff;
+		int blue = (pixel) & 0xff;
+
+		int red1 = (pixel1 >> 16) & 0xff;
+		int green1 = (pixel1 >> 8) & 0xff;
+		int blue1 = (pixel1) & 0xff;
+
+		double sum = Math.pow(red - red1, 2);
+		sum += Math.pow(green - green1, 2);
+		sum += Math.pow(blue - blue1, 2);
+
+		sum = Math.sqrt(sum);
+
+		return sum;
+	}
+
+	private static String ArgbToString(int pixel) {
+		StringBuilder sb = new StringBuilder("[");
+		int alpha = (pixel >> 24) & 0xff;
+		int red = (pixel >> 16) & 0xff;
+		int green = (pixel >> 8) & 0xff;
+		int blue = (pixel) & 0xff;
+
+		sb.append(alpha).append(',').append(red).append(',').append(green)
+				.append(',').append(blue).append(',').append(pixel).append(']');
+		return sb.toString();
 	}
 }

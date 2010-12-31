@@ -53,7 +53,7 @@ public class SmartPhone {
 				if (mRandom.nextFloat() > mInputFrequency)
 					return;
 				
-				int rgb = mRealNetwork.getRGBat(mPoint);
+				int rgb = mRealNetwork.getValue(mPoint.x, mPoint.y);
 				mPerceivedNetwork.addReading(rgb, mPoint);
 				return;
 			}

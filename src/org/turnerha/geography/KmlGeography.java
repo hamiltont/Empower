@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Polygon;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,5 +108,16 @@ public class KmlGeography {
 			}
 		}
 		return false;
+	}
+	
+	public Rectangle getPixelSize() {
+		Rectangle totalUnion = null;
+		for (MyPolygon poly : mPolys) 
+			if (totalUnion == null)
+				totalUnion = new Rectangle(poly.mPoly.getBounds());
+			else
+				totalUnion = totalUnion.union(poly.mPoly.getBounds());
+		
+		return totalUnion;
 	}
 }
