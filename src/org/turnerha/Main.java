@@ -15,11 +15,13 @@ import java.util.Random;
 
 import javax.swing.JFrame;
 
-import org.turnerha.environment.EnvironUtils;
-import org.turnerha.environment.PerceivedEnviron;
-import org.turnerha.environment.RealEnviron;
+import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
+import org.turnerha.environment.impl.ImageBackedRealEnvironment;
+import org.turnerha.environment.utils.EnvironUtils;
 import org.turnerha.geography.KmlGeography;
 import org.turnerha.geography.KmlReader;
+import org.turnerha.geography.Projection;
+import org.turnerha.geography.ProjectionCartesian;
 
 public class Main {
 
@@ -29,8 +31,8 @@ public class Main {
 	public static int phonesPerSlice = 200;
 
 	ModelView mModelView;
-	RealEnviron mRealNetwork;
-	PerceivedEnviron mPerceivedNetwork;
+	ImageBackedRealEnvironment mRealNetwork;
+	ImageBackedPerceivedEnvironment mPerceivedNetwork;
 
 	private KmlGeography mKmlGeography;
 
@@ -53,17 +55,17 @@ public class Main {
 		mKmlGeography = kmlGeography;
 
 		// Create perceived Environment
-		PerceivedEnviron pn = new PerceivedEnviron(screen, kmlGeography);
+		ImageBackedPerceivedEnvironment pn = new ImageBackedPerceivedEnvironment(screen, kmlGeography);
 		mPerceivedNetwork = pn;
 
 		// Create real network
 		BufferedImage colorScheme = EnvironUtils
 				.createGradientImage(null, null);
-		RealEnviron rn = new RealEnviron(networkFileName, screen, colorScheme,
+		ImageBackedRealEnvironment rn = new ImageBackedRealEnvironment(networkFileName, screen, colorScheme,
 				0.5f, kmlGeography);
 		mRealNetwork = rn;
 
-		calculateAccuracy(rn, pn, kmlGeography);
+		//calculateAccuracy(rn, pn, kmlGeography);
 
 		// Create ModelFrontBuffer
 		ModelProxy proxy = new ModelProxy(rows, columns);
@@ -71,6 +73,8 @@ public class Main {
 		// Create ModelBackBuffer
 		ModelController controller = new ModelController(proxy, rows, columns);
 
+		Projection rando = new ProjectionCartesian(kmlGeography.getGeoBox(), screen);
+		
 		// Build Slices
 		ShallowSlice[][] slices = new ShallowSlice[rows][columns];
 		for (int row : Util.range(rows))
@@ -87,7 +91,7 @@ public class Main {
 					slicePhones
 							.add(new SmartPhone(new Point(x, y), reader
 									.getPoly(), pn, rn, moveTendenancy,
-									inputFrequency));
+									inputFrequency, rando));
 				}
 
 				Slice s = new Slice(slicePhones, controller, row, col);
@@ -165,8 +169,8 @@ public class Main {
 
 			case KeyEvent.VK_A:
 				// Calculate accuracy and write out
-				calculateAccuracy(mRealNetwork, mPerceivedNetwork,
-						mKmlGeography);
+				//calculateAccuracy(mRealNetwork, mPerceivedNetwork,
+				//		mKmlGeography);
 				return true;
 
 			}
@@ -178,7 +182,7 @@ public class Main {
 
 	private static double maxDifference = 0;
 	
-	private static void calculateAccuracy(RealEnviron re, PerceivedEnviron pe,
+	/*private static void calculateAccuracy(ImageBackedRealEnvironment re, ImageBackedPerceivedEnvironment pe,
 			KmlGeography kml) {
 		Dimension size = re.getSize();
 
@@ -208,7 +212,7 @@ public class Main {
 		// over the total amount
 		double accuracy = (maxDifference - currentDifference) / maxDifference;
 		System.out.println("Accuracy is " + accuracy);
-	}
+	}*/
 	
 	private static double findDistance(int pixel, int pixel1) {
 		int red = (pixel >> 16) & 0xff;

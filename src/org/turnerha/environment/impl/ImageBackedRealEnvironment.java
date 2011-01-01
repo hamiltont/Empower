@@ -1,9 +1,10 @@
-package org.turnerha.environment;
+package org.turnerha.environment.impl;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
 import java.io.File;
@@ -11,9 +12,15 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import org.turnerha.environment.RealEnvironment;
+import org.turnerha.environment.utils.Loader;
+import org.turnerha.geography.GeoBox;
+import org.turnerha.geography.GeoLocation;
 import org.turnerha.geography.KmlGeography;
+import org.turnerha.geography.Projection;
+import org.turnerha.geography.ProjectionCartesian;
 
-public class RealEnviron implements Environment {
+public class ImageBackedRealEnvironment implements RealEnvironment {
 	BufferedImage mRealEnviron;
 
 	/** A rescale filter operation that makes the image somewhat transparent */
@@ -29,6 +36,12 @@ public class RealEnviron implements Environment {
 	private KmlGeography mKmlGeography;
 
 	/**
+	 * The projection between the pixel values in the backing image model data
+	 * and real-world latitude longitude
+	 */
+	private ProjectionCartesian mProjection;
+
+	/**
 	 * 
 	 * @param realEnvironmentFile
 	 * @param size
@@ -38,10 +51,12 @@ public class RealEnviron implements Environment {
 	 *            the realEnviron will be matched to this color scheme as best
 	 *            as possible
 	 */
-	public RealEnviron(File realEnvironmentFile, Dimension size,
+	public ImageBackedRealEnvironment(File realEnvironmentFile, Dimension size,
 			BufferedImage colorScheme, float alpha, KmlGeography kmlGeography) {
 
 		mSize = size;
+
+		mProjection = new ProjectionCartesian(kmlGeography.getGeoBox(), size);
 
 		// Setup the alpha operation
 		float[] scales = { 1f, 1f, 1f, 0.5f };
@@ -100,7 +115,7 @@ public class RealEnviron implements Environment {
 	}
 
 	@Override
-	public void paint(Graphics g) {
+	public void paintInto(Graphics g, Projection proj) {
 		Graphics2D g2d = (Graphics2D) g;
 
 		/* Draw the image, applying the alpha filter */
@@ -108,16 +123,17 @@ public class RealEnviron implements Environment {
 	}
 
 	@Override
-	public int getValue(int x, int y) {
-		return mRealEnviron.getRGB(x, y);
-	}
-
-	@Override
-	public Dimension getSize() {
+	public GeoBox getSize() {
 		int w = mRealEnviron.getWidth();
 		int h = mRealEnviron.getHeight();
 
-		return new Dimension(w, h);
+		return mProjection.getGeoBoxOf(new Rectangle(w, h));	
+	}
+
+	@Override
+	public int getValueAt(GeoLocation location) {
+		Point p = mProjection.getPointAt(location);
+		return mRealEnviron.getRGB(p.x, p.y);
 	}
 
 }

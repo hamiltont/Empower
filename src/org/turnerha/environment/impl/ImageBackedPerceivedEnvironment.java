@@ -1,4 +1,4 @@
-package org.turnerha.environment;
+package org.turnerha.environment.impl;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -8,6 +8,7 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Transparency;
 import java.awt.image.BufferedImage;
 import java.awt.image.LookupOp;
@@ -16,11 +17,17 @@ import java.awt.image.RescaleOp;
 import java.util.HashMap;
 
 import org.jdesktop.swingx.graphics.BlendComposite;
+import org.turnerha.environment.PerceivedEnvironment;
+import org.turnerha.environment.utils.EnvironUtils;
+import org.turnerha.geography.GeoBox;
+import org.turnerha.geography.GeoLocation;
 import org.turnerha.geography.KmlGeography;
+import org.turnerha.geography.Projection;
+import org.turnerha.geography.ProjectionCartesian;
 
 // TODO - Hide the Perceived network behind a server object. The server object can then
 // monitor the 'bandwidth' consumed
-public class PerceivedEnviron implements Environment {
+public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	BufferedImage mNetworkBlackWhite;
 
 	HashMap<Integer, BufferedImage> mReadingCircles = new HashMap<Integer, BufferedImage>();
@@ -40,9 +47,16 @@ public class PerceivedEnviron implements Environment {
 
 	private KmlGeography mKmlGeography;
 
-	public PerceivedEnviron(Dimension size, KmlGeography m) {
+	/**
+	 * The projection between the pixel values in the backing image model data
+	 * and real-world latitude longitude
+	 */
+	private ProjectionCartesian mProjection;
+
+	public ImageBackedPerceivedEnvironment(Dimension size, KmlGeography m) {
 
 		mKmlGeography = m;
+		mProjection = new ProjectionCartesian(m.getGeoBox(), size);
 
 		mNetworkBlackWhite = createCompatibleTranslucentImage(size.width,
 				size.height);
@@ -60,7 +74,10 @@ public class PerceivedEnviron implements Environment {
 		mColorize = new LookupOp(lookupTable, null);
 	}
 
-	public void addReading(int value, Point p) {
+	@Override
+	public void addReading(int value, GeoLocation loc) {
+
+		Point p = mProjection.getPointAt(loc);
 
 		BufferedImage mReading = mReadingCircles.get(new Integer(value));
 
@@ -79,7 +96,7 @@ public class PerceivedEnviron implements Environment {
 	}
 
 	@Override
-	public void paint(Graphics g) {
+	public void paintInto(Graphics g, Projection proj) {
 
 		// BufferedImage heatMap = mColorize.filter(mNetworkBlackWhite, null);
 		// The only color difference b/w real and perceived is that perceived is
@@ -125,16 +142,11 @@ public class PerceivedEnviron implements Environment {
 	}
 
 	@Override
-	public int getValue(int x, int y) {
-		return mNetworkBlackWhite.getRGB(x, y);
-	}
-
-	@Override
-	public Dimension getSize() {
+	public GeoBox getSize() {
 		int w = mNetworkBlackWhite.getWidth();
 		int h = mNetworkBlackWhite.getHeight();
 
-		return new Dimension(w, h);
+		return mProjection.getGeoBoxOf(new Rectangle(w, h));
 	}
 
 	/**
@@ -176,5 +188,11 @@ public class PerceivedEnviron implements Environment {
 			return true;
 
 		return false;
+	}
+
+	@Override
+	public int getValueAt(GeoLocation location) {
+		Point p = mProjection.getPointAt(location);
+		return mNetworkBlackWhite.getRGB(p.x, p.y);
 	}
 }

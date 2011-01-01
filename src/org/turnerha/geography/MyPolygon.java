@@ -6,7 +6,7 @@ import java.util.List;
 
 
 public class MyPolygon {
-	public List<DoublePoint> mLocations;
+	public List<GeoLocation> mLocations;
 	public List<Point> mPoints;
 	public Polygon mPoly;
 }

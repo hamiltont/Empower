@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.turnerha.environment.Environment;
-import org.turnerha.environment.PerceivedEnviron;
-import org.turnerha.environment.RealEnviron;
+import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
+import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 import org.turnerha.geography.KmlGeography;
 
 @SuppressWarnings( { "serial" })
@@ -24,12 +24,12 @@ class ModelView extends Component {
 
 	private KmlGeography mMap;
 	private Environment mNetwork;
-	private RealEnviron mRealEnviron;
+	private ImageBackedRealEnvironment mRealEnviron;
 
-	public ModelView(ModelProxy proxy, ModelController cont, KmlGeography m, Environment rn, RealEnviron realEnviron) {
+	public ModelView(ModelProxy proxy, ModelController cont, KmlGeography m, Environment rn, ImageBackedRealEnvironment imageBackedRealEnvironment) {
 		this.proxy = proxy;
 		controller_ = cont;
-		mRealEnviron = realEnviron;
+		mRealEnviron = imageBackedRealEnvironment;
 
 		mMap = m;
 		mNetwork = rn;
@@ -103,7 +103,7 @@ class ModelView extends Component {
 			proxy.modelLock.unlock();
 		}
 
-		mNetwork.paint(g);
+		mNetwork.paintInto(g, null);
 
 		if (frameCount == FRAMES) {
 			long timeInMilliSec = totalTime / 1000000;
@@ -129,7 +129,7 @@ class ModelView extends Component {
 		g.drawString("Accuracy within coverage: xx%", 10, 100);
 		g.drawString("Accuracy total: xx%", 10, 115);
 
-		if (mNetwork instanceof PerceivedEnviron)
+		if (mNetwork instanceof ImageBackedPerceivedEnvironment)
 			g.drawString("Viewing Perceived Environment (Press R to change)", 10, 130);
 		else
 			g.drawString("Viewing Perceived Environment (Press P to change)", 10, 130);

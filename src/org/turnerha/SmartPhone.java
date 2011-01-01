@@ -4,9 +4,10 @@ import java.awt.Point;
 import java.util.List;
 import java.util.Random;
 
-import org.turnerha.environment.PerceivedEnviron;
-import org.turnerha.environment.RealEnviron;
+import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
+import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 import org.turnerha.geography.MyPolygon;
+import org.turnerha.geography.Projection;
 
 public class SmartPhone {
 
@@ -14,17 +15,21 @@ public class SmartPhone {
 	private Random mRandom = new Random();
 	private List<MyPolygon> mCounties;
 	private boolean mShouldRemove = false;
-	private PerceivedEnviron mPerceivedNetwork;
-	private RealEnviron mRealNetwork;
+	private ImageBackedPerceivedEnvironment mPerceivedNetwork;
+	private ImageBackedRealEnvironment mRealNetwork;
 	private float mMoveTendenancy;
 	private float mInputFrequency;
+	private Projection mProjection;
 
-	public SmartPhone(Point p, List<MyPolygon> counties, PerceivedEnviron pn, RealEnviron rn, float moveTendenancy, float inputFrequency) {
+	public SmartPhone(Point p, List<MyPolygon> counties,
+			ImageBackedPerceivedEnvironment pn, ImageBackedRealEnvironment rn,
+			float moveTendenancy, float inputFrequency, Projection proj) {
 		mPoint = p;
 		mCounties = counties;
 		mPerceivedNetwork = pn;
 		mRealNetwork = rn;
-		
+		mProjection = proj;
+
 		mMoveTendenancy = moveTendenancy;
 		mInputFrequency = inputFrequency;
 	}
@@ -32,7 +37,7 @@ public class SmartPhone {
 	public void move() {
 		if (mRandom.nextFloat() > mMoveTendenancy)
 			return;
-		
+
 		int xChange = mRandom.nextInt(3);
 		int yChange = mRandom.nextInt(3);
 		boolean xRight = mRandom.nextBoolean();
@@ -52,9 +57,12 @@ public class SmartPhone {
 			if (poly.mPoly.contains(mPoint)) {
 				if (mRandom.nextFloat() > mInputFrequency)
 					return;
-				
-				int rgb = mRealNetwork.getValue(mPoint.x, mPoint.y);
-				mPerceivedNetwork.addReading(rgb, mPoint);
+
+				int rgb = mRealNetwork.getValueAt(mProjection
+						.getLocationAt(mPoint));
+				mPerceivedNetwork.addReading(rgb, mProjection
+						.getLocationAt(mPoint));
+
 				return;
 			}
 

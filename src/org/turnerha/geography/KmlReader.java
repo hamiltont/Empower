@@ -17,8 +17,8 @@ import com.keithpower.gekmlib.Placemark;
 public class KmlReader {
 
 	private List<MyPolygon> mPoly;
-	public DoublePoint mTopRight;
-	public DoublePoint mBottomLeft;
+	public GeoLocation mTopRight;
+	public GeoLocation mBottomLeft;
 
 	public List<MyPolygon> getPoly() {
 		return mPoly;
@@ -31,8 +31,8 @@ public class KmlReader {
 
 		Kml kml;
 
-		DoublePoint topRight = null;
-		DoublePoint bottomLeft = null;
+		GeoLocation topRight = null;
+		GeoLocation bottomLeft = null;
 
 		try {
 			kml = parser.parse(inputFile);
@@ -48,18 +48,18 @@ public class KmlReader {
 						.getLinearRing().getNumericalCoordinates();
 
 				MyPolygon poly = new MyPolygon();
-				ArrayList<DoublePoint> polyPoints = new ArrayList<DoublePoint>(
+				ArrayList<GeoLocation> polyPoints = new ArrayList<GeoLocation>(
 						Math.round((float) coords.length * 0.666666f));
 
 				for (int i = 0; i < coords.length; i = i + 3) {
 
-					DoublePoint dp = new DoublePoint();
+					GeoLocation dp = new GeoLocation();
 					dp.lon = coords[i];
 					dp.lat = coords[i + 1];
 
 					if (topRight == null) {
-						topRight = new DoublePoint(dp.lat, dp.lon);
-						bottomLeft = new DoublePoint(dp.lat, dp.lon);
+						topRight = new GeoLocation(dp.lat, dp.lon);
+						bottomLeft = new GeoLocation(dp.lat, dp.lon);
 					}
 
 					if (dp.lat > topRight.lat)

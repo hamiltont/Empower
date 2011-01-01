@@ -13,9 +13,9 @@ public class KmlGeography {
 
 	private List<MyPolygon> mPolys;
 
-	private static DoublePoint topRight = new DoublePoint(39.520992,
+	private static GeoLocation topRight = new GeoLocation(39.520992,
 			-74.421386);
-	private static DoublePoint botLeft = new DoublePoint(36.509636,
+	private static GeoLocation botLeft = new GeoLocation(36.509636,
 			-83.913574);
 
 	private static double latDifference = topRight.lat - botLeft.lat;
@@ -24,7 +24,7 @@ public class KmlGeography {
 	private static int mPixelWidth = 1400;
 	private static int mPixelHeight = 850;
 
-	public KmlGeography(List<MyPolygon> polys, Dimension screen, DoublePoint tr, DoublePoint bl) {
+	public KmlGeography(List<MyPolygon> polys, Dimension screen, GeoLocation tr, GeoLocation bl) {
 		topRight = tr;
 		botLeft = bl;
 		latDifference = topRight.lat - botLeft.lat;
@@ -41,7 +41,7 @@ public class KmlGeography {
 			int[] yArray = new int[poly.mLocations.size()];
 
 			int pos = 0;
-			for (DoublePoint dp : poly.mLocations) {
+			for (GeoLocation dp : poly.mLocations) {
 
 				// Remove the base, and then multiple by pixels per latitude
 				double yFloat = (dp.lat - botLeft.lat)
@@ -85,10 +85,6 @@ public class KmlGeography {
 
 	}
 
-	public Point convert(float lat, float lon) {
-		return null;
-	}
-
 	/**
 	 * Returns true if the pixel is contained within the polygons present on
 	 * this map, false otherwise
@@ -108,6 +104,11 @@ public class KmlGeography {
 			}
 		}
 		return false;
+	}
+	
+	
+	public GeoBox getGeoBox() {
+		return new GeoBox(topRight, botLeft);
 	}
 	
 	public Rectangle getPixelSize() {
