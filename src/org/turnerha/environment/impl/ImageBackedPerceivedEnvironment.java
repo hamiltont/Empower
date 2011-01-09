@@ -11,17 +11,14 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Transparency;
 import java.awt.image.BufferedImage;
-import java.awt.image.LookupOp;
-import java.awt.image.LookupTable;
 import java.awt.image.RescaleOp;
 import java.util.HashMap;
 
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 
-import org.jdesktop.swingx.graphics.BlendComposite;
 import org.turnerha.Main;
 import org.turnerha.environment.PerceivedEnvironment;
+import org.turnerha.environment.utils.BlendComposite;
 import org.turnerha.environment.utils.EnvironUtils;
 import org.turnerha.environment.utils.ImagePanel;
 import org.turnerha.geography.GeoBox;
@@ -33,7 +30,7 @@ import org.turnerha.geography.ProjectionCartesian;
 // TODO - Hide the Perceived network behind a server object. The server object can then
 // monitor the 'bandwidth' consumed
 public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
-	BufferedImage mNetworkBlackWhite;
+	BufferedImage mNetwork;
 
 	HashMap<Integer, BufferedImage> mReadingCircles = new HashMap<Integer, BufferedImage>();
 
@@ -59,25 +56,31 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	private JFrame mDebugFrame;
 	private ImagePanel mDebugImagePanel;
 
+	private int mCoverageTotal = 0;
+	private double mCoverageCurrent = 0;
+
 	public ImageBackedPerceivedEnvironment(Dimension size, KmlGeography m) {
 
 		mKmlGeography = m;
 		mProjection = new ProjectionCartesian(m.getGeoBox(), size);
 
-		mNetworkBlackWhite = createCompatibleTranslucentImage(size.width,
-				size.height);
-		Graphics g = mNetworkBlackWhite.getGraphics();
-		g.setColor(Color.WHITE);
-		g.fillRect(0, 0, size.width, size.height);
-		g.dispose();
+		mNetwork = createCompatibleTranslucentImage(size.width, size.height);
 
 		if (Main.DEBUG) {
 			mDebugFrame = new JFrame("Perceived black/white");
-			mDebugImagePanel = new ImagePanel(mNetworkBlackWhite);
+			mDebugImagePanel = new ImagePanel(mNetwork);
 			mDebugFrame.getContentPane().add(mDebugImagePanel);
 			mDebugFrame.setSize(800, 500);
 			mDebugFrame.setVisible(true);
 		}
+
+		Rectangle geoSize = mKmlGeography.getPixelSize();
+
+		for (int x = geoSize.x; x < (geoSize.width + geoSize.x); x++)
+			for (int y = geoSize.y; y < (geoSize.height + geoSize.y); y++)
+				if (mKmlGeography.contains(x, y))
+					mCoverageTotal++;
+
 	}
 
 	@Override
@@ -89,25 +92,42 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 
 		if (mReading == null) {
 			Color c = new Color(value);
-			mReading = EnvironUtils.createReadingImage(10, c);
+			mReading = EnvironUtils.createReadingImage(3, c);
 			mReadingCircles.put(new Integer(value), mReading);
 		}
 
-		int circleRadius = mReading.getWidth() / 2;
-		Graphics2D g = (Graphics2D) mNetworkBlackWhite.getGraphics();
+		// Subtract current coverage of the 3x3 grid from the total coverage
+		int[] alphas = new int[9];
+		mNetwork.getAlphaRaster().getPixels(p.x - 1, p.y - 1, 3, 3, alphas);
+		double localCoverage = 0;
+		for (int alpha : alphas)
+			localCoverage += (double) alpha / 255d;
+		mCoverageCurrent -= localCoverage;
 
-		g.setComposite(BlendComposite.Average.derive(0.1f));
-		g.drawImage(mReading, null, p.x - circleRadius, p.y - circleRadius);
+		Graphics2D g = (Graphics2D) mNetwork.getGraphics();
+		g.setComposite(BlendComposite.AverageInclAlpha.derive(1f));
+		g.drawImage(mReading, null, p.x - 1, p.y - 1);
 		mReadings++;
 
+		// Add back in the coverage
+		alphas = new int[9];
+		mNetwork.getAlphaRaster().getPixels(p.x - 1, p.y - 1, 3, 3, alphas);
+		localCoverage = 0;
+		for (int alpha : alphas)
+			localCoverage += (double) alpha / 255d;
+		mCoverageCurrent += localCoverage;
+
+		System.out.println("Total Coverage is " + mCoverageCurrent
+				/ (double) mCoverageTotal);
+
 		if (Main.DEBUG)
-			mDebugImagePanel.setImage(mNetworkBlackWhite);
+			mDebugImagePanel.setImage(mNetwork);
 	}
 
 	@Override
 	public void paintInto(Graphics g, Projection proj) {
 
-		// BufferedImage heatMap = mColorize.filter(mNetworkBlackWhite, null);
+		// BufferedImage heatMap = mColorize.filter(mNetwork, null);
 		// The only color difference b/w real and perceived is that perceived is
 		// based on a base-white image and real is based on a base-black. I
 		// should
@@ -116,7 +136,7 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 
 		/* Draw the image, applying an alpha filter */
 		Graphics2D g2d = (Graphics2D) g;
-		g2d.drawImage(mNetworkBlackWhite, mRealpha, 0, 0);
+		g2d.drawImage(mNetwork, mRealpha, 0, 0);
 
 	}
 
@@ -133,8 +153,8 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 
 	@Override
 	public GeoBox getSize() {
-		int w = mNetworkBlackWhite.getWidth();
-		int h = mNetworkBlackWhite.getHeight();
+		int w = mNetwork.getWidth();
+		int h = mNetwork.getHeight();
 
 		return mProjection.getGeoBoxOf(new Rectangle(w, h));
 	}
@@ -146,11 +166,11 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	 * pixel that is black
 	 */
 	public BufferedImage generateForAccuracyCheck() {
-		BufferedImage temp = createCompatibleTranslucentImage(
-				mNetworkBlackWhite.getWidth(), mNetworkBlackWhite.getHeight());
+		BufferedImage temp = createCompatibleTranslucentImage(mNetwork
+				.getWidth(), mNetwork.getHeight());
 
 		Graphics g = temp.getGraphics();
-		g.drawImage(mNetworkBlackWhite, 0, 0, null);
+		g.drawImage(mNetwork, 0, 0, null);
 
 		for (int x = 0; x < temp.getWidth(); x++)
 			for (int y = 0; y < temp.getHeight(); y++) {
@@ -183,6 +203,6 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	@Override
 	public int getValueAt(GeoLocation location) {
 		Point p = mProjection.getPointAt(location);
-		return mNetworkBlackWhite.getRGB(p.x, p.y);
+		return mNetwork.getRGB(p.x, p.y);
 	}
 }
