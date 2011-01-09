@@ -1,11 +1,9 @@
 package org.turnerha;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
@@ -29,6 +27,7 @@ public class Main {
 	public static int rows = 1; // Do not change this unless you are sure
 	public static int columns = 1; // you can share Smart-phones between models
 	public static int phonesPerSlice = 200;
+	public static boolean DEBUG = true;
 
 	ModelView mModelView;
 	ImageBackedRealEnvironment mRealNetwork;

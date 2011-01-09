@@ -16,9 +16,14 @@ import java.awt.image.LookupTable;
 import java.awt.image.RescaleOp;
 import java.util.HashMap;
 
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+
 import org.jdesktop.swingx.graphics.BlendComposite;
+import org.turnerha.Main;
 import org.turnerha.environment.PerceivedEnvironment;
 import org.turnerha.environment.utils.EnvironUtils;
+import org.turnerha.environment.utils.ImagePanel;
 import org.turnerha.geography.GeoBox;
 import org.turnerha.geography.GeoLocation;
 import org.turnerha.geography.KmlGeography;
@@ -31,8 +36,6 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	BufferedImage mNetworkBlackWhite;
 
 	HashMap<Integer, BufferedImage> mReadingCircles = new HashMap<Integer, BufferedImage>();
-
-	LookupOp mColorize;
 
 	/**
 	 * Counts the number of readings that have been input, which we can then
@@ -53,6 +56,9 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	 */
 	private ProjectionCartesian mProjection;
 
+	private JFrame mDebugFrame;
+	private ImagePanel mDebugImagePanel;
+
 	public ImageBackedPerceivedEnvironment(Dimension size, KmlGeography m) {
 
 		mKmlGeography = m;
@@ -65,13 +71,13 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 		g.fillRect(0, 0, size.width, size.height);
 		g.dispose();
 
-		// mReading = createFadedCircleImage(10);
-
-		BufferedImage gradient = EnvironUtils.createGradientImage(null, null);
-
-		LookupTable lookupTable = EnvironUtils.createColorLookupTable(gradient,
-				0.5f);
-		mColorize = new LookupOp(lookupTable, null);
+		if (Main.DEBUG) {
+			mDebugFrame = new JFrame("Perceived black/white");
+			mDebugImagePanel = new ImagePanel(mNetworkBlackWhite);
+			mDebugFrame.getContentPane().add(mDebugImagePanel);
+			mDebugFrame.setSize(800, 500);
+			mDebugFrame.setVisible(true);
+		}
 	}
 
 	@Override
@@ -83,7 +89,7 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 
 		if (mReading == null) {
 			Color c = new Color(value);
-			mReading = createFadedCircleImage(10, c);
+			mReading = EnvironUtils.createReadingImage(10, c);
 			mReadingCircles.put(new Integer(value), mReading);
 		}
 
@@ -93,6 +99,9 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 		g.setComposite(BlendComposite.Average.derive(0.1f));
 		g.drawImage(mReading, null, p.x - circleRadius, p.y - circleRadius);
 		mReadings++;
+
+		if (Main.DEBUG)
+			mDebugImagePanel.setImage(mNetworkBlackWhite);
 	}
 
 	@Override
@@ -109,25 +118,6 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 		Graphics2D g2d = (Graphics2D) g;
 		g2d.drawImage(mNetworkBlackWhite, mRealpha, 0, 0);
 
-	}
-
-	public static BufferedImage createFadedCircleImage(int size,
-			Color focusColor) {
-		BufferedImage im = createCompatibleTranslucentImage(size, size);
-		float radius = size / 2f;
-
-		// RadialGradientPaint gradient = new RadialGradientPaint(radius,
-		// radius,
-		// radius, new float[] { 0f, 1f }, new Color[] { focusColor,
-		// new Color(0xffffffff, true) });
-
-		Graphics2D g = (Graphics2D) im.getGraphics();
-
-		// g.setPaint(gradient);
-		g.setColor(focusColor);
-		g.fillRect(0, 0, size, size);
-
-		return im;
 	}
 
 	public static BufferedImage createCompatibleTranslucentImage(int width,
