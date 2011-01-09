@@ -1,10 +1,18 @@
 package org.turnerha;
 
+import java.awt.Point;
+import java.util.HashSet;
 import java.util.List;
 
 public class Slice {
 
 	private List<SmartPhone> mPhones = null;
+
+	/**
+	 * Replaced every draw. Contains the points on the screen that smartphones
+	 * cover
+	 */
+	private HashSet<Point> mPhonePoints = new HashSet<Point>(0);
 	private int mRow;
 	private int mColumn;
 	private Thread mUpdateThread;
@@ -16,7 +24,11 @@ public class Slice {
 			while (true) {
 				update();
 				try {
-					controller.completeSlice(new ShallowSlice(Slice.this));
+					mPhonePoints = new HashSet<Point>(mPhones.size());
+					for (SmartPhone phone : mPhones)
+						mPhonePoints.add(phone.getLocation());
+					
+					controller.completeSlice(Slice.this);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -50,7 +62,7 @@ public class Slice {
 		for (int i = 0; i < size; i++) {
 			SmartPhone sp = mPhones.get(i);
 			sp.move();
-			
+
 			if (sp.getShouldRemove()) {
 				mPhones.remove(i);
 
@@ -70,5 +82,9 @@ public class Slice {
 
 	public int getColumn() {
 		return mColumn;
+	}
+
+	public HashSet<Point> getPoints() {
+		return mPhonePoints;
 	}
 }

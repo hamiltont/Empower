@@ -71,11 +71,11 @@ class ModelView extends Component {
 		proxy.modelLock.lock();
 		try {
 
-			ShallowSlice[][] slices = proxy.getModel();
+			Slice[][] slices = proxy.getModel();
 
 			for (int row : Util.range(slices.length))
 				for (int col : Util.range(slices[0].length)) {
-					ShallowSlice s = slices[row][col];
+					Slice s = slices[row][col];
 					if (s == null)
 						System.out.println("crap");
 

@@ -76,7 +76,7 @@ public class Main {
 		Projection rando = new ProjectionCartesian(kmlGeography.getGeoBox(), screen);
 		
 		// Build Slices
-		ShallowSlice[][] slices = new ShallowSlice[rows][columns];
+		Slice[][] slices = new Slice[rows][columns];
 		for (int row : Util.range(rows))
 			for (int col : Util.range(columns)) {
 				ArrayList<SmartPhone> slicePhones = new ArrayList<SmartPhone>();
@@ -95,12 +95,6 @@ public class Main {
 				}
 
 				Slice s = new Slice(slicePhones, controller, row, col);
-
-				// The shallow slice ctor is not thread safe. It's typically run
-				// from the thread for that slice, so that's fine. However, for
-				// the first copy we run it from the main thread, so we need to
-				// do the copy before we start the slice
-				slices[row][col] = new ShallowSlice(s);
 				s.start();
 			}
 

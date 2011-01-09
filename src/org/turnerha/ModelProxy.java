@@ -5,7 +5,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ModelProxy {
 
-	private ShallowSlice[][] mSlices = null;
+	private Slice[][] mSlices = null;
 	
 	private int mFrameCount = 0;
 
@@ -20,12 +20,12 @@ public class ModelProxy {
 	public ModelProxy(int rows, int columns) {
 	}
 
-	public ShallowSlice[][] getModel() {
+	public Slice[][] getModel() {
 		return mSlices;
 	}
 
-	public ShallowSlice[][] swapModel(ShallowSlice[][] newModel) {
-		ShallowSlice[][] temp = mSlices;
+	public Slice[][] swapModel(Slice[][] newModel) {
+		Slice[][] temp = mSlices;
 		mSlices = newModel;
 		++mFrameCount;
 		return temp;

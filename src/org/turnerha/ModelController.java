@@ -3,16 +3,16 @@ package org.turnerha;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ModelController {
-	private ShallowSlice[][] mFinishedSlices;
+	private Slice[][] mFinishedSlices;
 	private ModelProxy proxy;
 	public AtomicInteger sleepTime = new AtomicInteger(100);
 
 	public ModelController(ModelProxy proxy, int rows, int columns) {
-		mFinishedSlices = new ShallowSlice[rows][columns];
+		mFinishedSlices = new Slice[rows][columns];
 		this.proxy = proxy;
 	}
 
-	public synchronized void completeSlice(ShallowSlice slice)
+	public synchronized void completeSlice(Slice slice)
 			throws InterruptedException {
 
 		mFinishedSlices[slice.getRow()][slice.getColumn()] = slice;
