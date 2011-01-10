@@ -26,7 +26,9 @@ class ModelView extends Component {
 	private Environment mNetwork;
 	private ImageBackedRealEnvironment mRealEnviron;
 
-	public ModelView(ModelProxy proxy, ModelController cont, KmlGeography m, Environment rn, ImageBackedRealEnvironment imageBackedRealEnvironment) {
+	public ModelView(ModelProxy proxy, ModelController cont, KmlGeography m,
+			Environment rn,
+			ImageBackedRealEnvironment imageBackedRealEnvironment) {
 		this.proxy = proxy;
 		controller_ = cont;
 		mRealEnviron = imageBackedRealEnvironment;
@@ -76,8 +78,10 @@ class ModelView extends Component {
 			for (int row : Util.range(slices.length))
 				for (int col : Util.range(slices[0].length)) {
 					Slice s = slices[row][col];
-					if (s == null)
-						System.out.println("crap");
+					if (s == null) {
+						System.out.println("Proxy returned null Slice");
+						continue;
+					}
 
 					for (Point p : s.getPoints()) {
 						g.drawLine(p.x, p.y, p.x, p.y);
@@ -87,9 +91,9 @@ class ModelView extends Component {
 
 			g.setColor(Color.white);
 			g.drawString("Heartbeats: " + proxy.getFrameCount(), 10, 40);
-				
-			//if (proxy.getFrameCount() == 200)
-			//	mRealEnviron.loadNewEnvironment("foo");
+
+			// if (proxy.getFrameCount() == 200)
+			// mRealEnviron.loadNewEnvironment("foo");
 
 			long timeInMs = Math.round(Main.hoursPerHeartbeat * 60f * 1000f)
 					* proxy.getFrameCount();
@@ -130,16 +134,18 @@ class ModelView extends Component {
 		g.drawString("Accuracy total: xx%", 10, 115);
 
 		if (mNetwork instanceof ImageBackedPerceivedEnvironment)
-			g.drawString("Viewing Perceived Environment (Press R to change)", 10, 130);
+			g.drawString("Viewing Perceived Environment (Press R to change)",
+					10, 130);
 		else
-			g.drawString("Viewing Perceived Environment (Press P to change)", 10, 130);
-		
+			g.drawString("Viewing Perceived Environment (Press P to change)",
+					10, 130);
+
 		g.drawString("Press (esc) to quit", 10, 145);
 	}
-	
+
 	public void setDisplayNetwork(Environment n) {
 		mNetwork = n;
-		
+
 	}
 
 	private void calculateFrameRate() {

@@ -26,8 +26,8 @@ public class Main {
 	public static float hoursPerHeartbeat = 1000;
 	public static int rows = 1; // Do not change this unless you are sure
 	public static int columns = 1; // you can share Smart-phones between models
-	public static int phonesPerSlice = 200;
-	public static boolean DEBUG = true;
+	public static int phonesPerSlice = 1000;
+	public static boolean DEBUG = false;
 
 	ModelView mModelView;
 	ImageBackedRealEnvironment mRealNetwork;
@@ -53,16 +53,16 @@ public class Main {
 				reader.mTopRight, reader.mBottomLeft);
 		mKmlGeography = kmlGeography;
 
-		// Create perceived Environment
-		ImageBackedPerceivedEnvironment pn = new ImageBackedPerceivedEnvironment(screen, kmlGeography);
-		mPerceivedNetwork = pn;
-
 		// Create real network
 		BufferedImage colorScheme = EnvironUtils
 				.createGradientImage(null, null);
 		ImageBackedRealEnvironment rn = new ImageBackedRealEnvironment(networkFileName, screen, colorScheme,
 				0.5f, kmlGeography);
 		mRealNetwork = rn;
+		
+		// Create perceived Environment
+		ImageBackedPerceivedEnvironment pn = new ImageBackedPerceivedEnvironment(screen, kmlGeography, rn);
+		mPerceivedNetwork = pn;
 
 		//calculateAccuracy(rn, pn, kmlGeography);
 

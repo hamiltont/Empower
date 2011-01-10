@@ -127,7 +127,14 @@ public class ImageBackedRealEnvironment implements RealEnvironment {
 		int w = mRealEnviron.getWidth();
 		int h = mRealEnviron.getHeight();
 
-		return mProjection.getGeoBoxOf(new Rectangle(w, h));	
+		return mProjection.getGeoBoxOf(new Rectangle(w, h));
+	}
+
+	// TODO - Remove this once the ImageBackedPerceivedEnviron is no longer
+	// using it
+	public int getValueAt(int x, int y) {
+		int pixel = mRealEnviron.getRGB(x, y);
+		return pixel;
 	}
 
 	@Override
