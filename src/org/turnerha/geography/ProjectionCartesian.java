@@ -89,10 +89,11 @@ public class ProjectionCartesian implements Projection {
 		double yFloat = (loc.lat - mGeoBox.getBottomLeft().lat)
 				* mDesiredSize.getHeight() / mLatDifference;
 
-		int y = (int) Math.round(yFloat);
+		//int y = (int) Math.round(yFloat);
 
 		// Flip to align coordinate systems
-		y = (int) mDesiredSize.getHeight() - y;
+		//y = (int) mDesiredSize.getHeight() - y;
+		int y = (int) Math.round(mDesiredSize.getHeight() - yFloat);
 
 		// Remove the base, and then multiple by pixels per latitude
 		double xFloat = (loc.lon - mGeoBox.getBottomLeft().lon)

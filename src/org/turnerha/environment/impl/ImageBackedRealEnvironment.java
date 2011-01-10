@@ -143,4 +143,9 @@ public class ImageBackedRealEnvironment implements RealEnvironment {
 		return mRealEnviron.getRGB(p.x, p.y);
 	}
 
+	@Override
+	public BufferedImage renderFullImage() {
+		return mRealEnviron;
+	}
+
 }

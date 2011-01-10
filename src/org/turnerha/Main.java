@@ -8,9 +8,11 @@ import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
@@ -26,8 +28,8 @@ public class Main {
 	public static float hoursPerHeartbeat = 1000;
 	public static int rows = 1; // Do not change this unless you are sure
 	public static int columns = 1; // you can share Smart-phones between models
-	public static int phonesPerSlice = 1000;
-	public static boolean DEBUG = false;
+	public static int phonesPerSlice = 50000;
+	public static boolean DEBUG = true;
 
 	ModelView mModelView;
 	ImageBackedRealEnvironment mRealNetwork;
@@ -56,15 +58,16 @@ public class Main {
 		// Create real network
 		BufferedImage colorScheme = EnvironUtils
 				.createGradientImage(null, null);
-		ImageBackedRealEnvironment rn = new ImageBackedRealEnvironment(networkFileName, screen, colorScheme,
-				0.5f, kmlGeography);
+		ImageBackedRealEnvironment rn = new ImageBackedRealEnvironment(
+				networkFileName, screen, colorScheme, 0.5f, kmlGeography);
 		mRealNetwork = rn;
-		
+
 		// Create perceived Environment
-		ImageBackedPerceivedEnvironment pn = new ImageBackedPerceivedEnvironment(screen, kmlGeography, rn);
+		ImageBackedPerceivedEnvironment pn = new ImageBackedPerceivedEnvironment(
+				screen, kmlGeography, rn);
 		mPerceivedNetwork = pn;
 
-		//calculateAccuracy(rn, pn, kmlGeography);
+		// calculateAccuracy(rn, pn, kmlGeography);
 
 		// Create ModelFrontBuffer
 		ModelProxy proxy = new ModelProxy(rows, columns);
@@ -72,8 +75,9 @@ public class Main {
 		// Create ModelBackBuffer
 		ModelController controller = new ModelController(proxy, rows, columns);
 
-		Projection rando = new ProjectionCartesian(kmlGeography.getGeoBox(), screen);
-		
+		Projection rando = new ProjectionCartesian(kmlGeography.getGeoBox(),
+				screen);
+
 		// Build Slices
 		Slice[][] slices = new Slice[rows][columns];
 		for (int row : Util.range(rows))
@@ -87,10 +91,9 @@ public class Main {
 						y = r.nextInt(screen.height);
 					} while (false == kmlGeography.contains(x, y));
 
-					slicePhones
-							.add(new SmartPhone(new Point(x, y), reader
-									.getPoly(), pn, rn, moveTendenancy,
-									inputFrequency, rando));
+					slicePhones.add(new SmartPhone(new Point(x, y), reader
+							.getPoly(), pn, rn, moveTendenancy, inputFrequency,
+							rando));
 				}
 
 				Slice s = new Slice(slicePhones, controller, row, col);
@@ -162,8 +165,12 @@ public class Main {
 
 			case KeyEvent.VK_A:
 				// Calculate accuracy and write out
-				//calculateAccuracy(mRealNetwork, mPerceivedNetwork,
-				//		mKmlGeography);
+				// calculateAccuracy(mRealNetwork, mPerceivedNetwork,
+				// mKmlGeography);
+				return true;
+
+			case KeyEvent.VK_O:
+				writeOut(mRealNetwork, mPerceivedNetwork);
 				return true;
 
 			}
@@ -174,39 +181,35 @@ public class Main {
 	}
 
 	private static double maxDifference = 0;
-	
-	/*private static void calculateAccuracy(ImageBackedRealEnvironment re, ImageBackedPerceivedEnvironment pe,
-			KmlGeography kml) {
-		Dimension size = re.getSize();
 
-		// Change all white pixels to black
-		BufferedImage colorCorrectedEnviron = pe.generateForAccuracyCheck();
+	/*
+	 * private static void calculateAccuracy(ImageBackedRealEnvironment re,
+	 * ImageBackedPerceivedEnvironment pe, KmlGeography kml) { Dimension size =
+	 * re.getSize();
+	 * 
+	 * // Change all white pixels to black BufferedImage colorCorrectedEnviron =
+	 * pe.generateForAccuracyCheck();
+	 * 
+	 * // Tally up the differences b/w real and perceived double
+	 * currentDifference = 0; for (int x = 0; x < size.width; x++) for (int y =
+	 * 0; y < size.height; y++) {
+	 * 
+	 * if (false == kml.contains(x, y)) continue;
+	 * 
+	 * int r = re.getValue(x, y); int p = colorCorrectedEnviron.getRGB(x, y);
+	 * currentDifference += findDistance(r, p); }
+	 * System.out.println("Perceived Difference is " + currentDifference);
+	 * 
+	 * // Find the maximum difference if (maxDifference == 0) maxDifference =
+	 * currentDifference; System.out.println("Max Difference is " +
+	 * maxDifference);
+	 * 
+	 * // Find the total accuracy by calculating the amount that is correct //
+	 * over the total amount double accuracy = (maxDifference -
+	 * currentDifference) / maxDifference; System.out.println("Accuracy is " +
+	 * accuracy); }
+	 */
 
-		// Tally up the differences b/w real and perceived
-		double currentDifference = 0;
-		for (int x = 0; x < size.width; x++)
-			for (int y = 0; y < size.height; y++) {
-
-				if (false == kml.contains(x, y))
-					continue;
-
-				int r = re.getValue(x, y);
-				int p = colorCorrectedEnviron.getRGB(x, y);
-				currentDifference += findDistance(r, p);
-			}
-		System.out.println("Perceived Difference is " + currentDifference);
-
-		// Find the maximum difference
-		if (maxDifference == 0)
-			maxDifference = currentDifference;
-		System.out.println("Max Difference is " + maxDifference);
-
-		// Find the total accuracy by calculating the amount that is correct
-		// over the total amount
-		double accuracy = (maxDifference - currentDifference) / maxDifference;
-		System.out.println("Accuracy is " + accuracy);
-	}*/
-	
 	private static double findDistance(int pixel, int pixel1) {
 		int red = (pixel >> 16) & 0xff;
 		int green = (pixel >> 8) & 0xff;
@@ -223,6 +226,17 @@ public class Main {
 		sum = Math.sqrt(sum);
 
 		return sum;
+	}
+
+	public void writeOut(ImageBackedRealEnvironment mR,
+			ImageBackedPerceivedEnvironment mP) {
+
+		try {
+			ImageIO.write(mR.renderFullImage(), "png", new File("real.png"));
+			ImageIO.write(mP.renderFullImage(), "png", new File("perc.png"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private static String ArgbToString(int pixel) {

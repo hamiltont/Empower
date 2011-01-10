@@ -1,6 +1,7 @@
 package org.turnerha.environment;
 
 import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 
 import org.turnerha.geography.GeoBox;
 import org.turnerha.geography.GeoLocation;
@@ -33,4 +34,8 @@ public interface Environment {
 
 	/** Returns the minimum bounding box for the real network */
 	public GeoBox getSize();
+	
+	public BufferedImage renderFullImage(); 
 }
+
+

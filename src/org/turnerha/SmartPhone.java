@@ -6,12 +6,13 @@ import java.util.Random;
 
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
 import org.turnerha.environment.impl.ImageBackedRealEnvironment;
+import org.turnerha.geography.GeoLocation;
 import org.turnerha.geography.MyPolygon;
 import org.turnerha.geography.Projection;
 
 public class SmartPhone {
 
-	private Point mPoint;
+	private GeoLocation mPoint;
 	private Random mRandom = new Random();
 	private List<MyPolygon> mCounties;
 	private boolean mShouldRemove = false;
@@ -24,7 +25,7 @@ public class SmartPhone {
 	public SmartPhone(Point p, List<MyPolygon> counties,
 			ImageBackedPerceivedEnvironment pn, ImageBackedRealEnvironment rn,
 			float moveTendenancy, float inputFrequency, Projection proj) {
-		mPoint = p;
+		mPoint = proj.getLocationAt(p);
 		mCounties = counties;
 		mPerceivedNetwork = pn;
 		mRealNetwork = rn;
@@ -38,30 +39,28 @@ public class SmartPhone {
 		if (mRandom.nextFloat() > mMoveTendenancy)
 			return;
 
-		int xChange = mRandom.nextInt(3);
-		int yChange = mRandom.nextInt(3);
+		double xChange = mRandom.nextDouble() / 1000d;
+		double yChange = mRandom.nextDouble() / 1000d;
 		boolean xRight = mRandom.nextBoolean();
 		boolean yUp = mRandom.nextBoolean();
 
 		if (xRight)
-			mPoint.x += xChange;
+			mPoint.lon += xChange;
 		else
-			mPoint.x -= xChange;
+			mPoint.lon -= xChange;
 
 		if (yUp)
-			mPoint.y += yChange;
+			mPoint.lat += yChange;
 		else
-			mPoint.y -= yChange;
+			mPoint.lat -= yChange;
 
 		for (MyPolygon poly : mCounties)
-			if (poly.mPoly.contains(mPoint)) {
+			if (poly.mPoly.contains(mProjection.getPointAt(mPoint))) {
 				if (mRandom.nextFloat() > mInputFrequency)
 					return;
 
-				int rgb = mRealNetwork.getValueAt(mProjection
-						.getLocationAt(mPoint));
-				mPerceivedNetwork.addReading(rgb, mProjection
-						.getLocationAt(mPoint));
+				int rgb = mRealNetwork.getValueAt(mPoint);
+				mPerceivedNetwork.addReading(rgb, mPoint);
 
 				return;
 			}
@@ -70,7 +69,7 @@ public class SmartPhone {
 	}
 
 	public Point getLocation() {
-		return mPoint;
+		return mProjection.getPointAt(mPoint);
 	}
 
 	public boolean getShouldRemove() {
