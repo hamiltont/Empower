@@ -9,14 +9,18 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Allows a kml-based geography file to be painted to the screen
+ * 
+ * @author hamiltont
+ * 
+ */
 public class KmlGeography {
 
 	private List<MyPolygon> mPolys;
 
-	private static GeoLocation topRight = new GeoLocation(39.520992,
-			-74.421386);
-	private static GeoLocation botLeft = new GeoLocation(36.509636,
-			-83.913574);
+	private static GeoLocation topRight = new GeoLocation(39.520992, -74.421386);
+	private static GeoLocation botLeft = new GeoLocation(36.509636, -83.913574);
 
 	private static double latDifference = topRight.lat - botLeft.lat;
 	private static double lonDifference = botLeft.lon - topRight.lon;
@@ -24,17 +28,18 @@ public class KmlGeography {
 	private static int mPixelWidth = 1400;
 	private static int mPixelHeight = 850;
 
-	public KmlGeography(List<MyPolygon> polys, Dimension screen, GeoLocation tr, GeoLocation bl) {
+	public KmlGeography(List<MyPolygon> polys, Dimension screen,
+			GeoLocation tr, GeoLocation bl) {
 		topRight = tr;
 		botLeft = bl;
 		latDifference = topRight.lat - botLeft.lat;
 		lonDifference = botLeft.lon - topRight.lon;
-		
+
 		mPixelWidth = screen.width;
 		mPixelHeight = screen.height;
 
 		mPolys = polys;
-		
+
 		for (MyPolygon poly : polys) {
 			poly.mPoints = new ArrayList<Point>(poly.mLocations.size());
 			int[] xArray = new int[poly.mLocations.size()];
@@ -105,20 +110,19 @@ public class KmlGeography {
 		}
 		return false;
 	}
-	
-	
+
 	public GeoBox getGeoBox() {
 		return new GeoBox(topRight, botLeft);
 	}
-	
+
 	public Rectangle getPixelSize() {
 		Rectangle totalUnion = null;
-		for (MyPolygon poly : mPolys) 
+		for (MyPolygon poly : mPolys)
 			if (totalUnion == null)
 				totalUnion = new Rectangle(poly.mPoly.getBounds());
 			else
 				totalUnion = totalUnion.union(poly.mPoly.getBounds());
-		
+
 		return totalUnion;
 	}
 }

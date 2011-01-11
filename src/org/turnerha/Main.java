@@ -15,6 +15,7 @@ import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 
+import org.turnerha.environment.MetricCalculator;
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
 import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 import org.turnerha.environment.utils.EnvironUtils;
@@ -28,7 +29,7 @@ public class Main {
 	public static float hoursPerHeartbeat = 1000;
 	public static int rows = 1; // Do not change this unless you are sure
 	public static int columns = 1; // you can share Smart-phones between models
-	public static int phonesPerSlice = 50000;
+	public static int phonesPerSlice = 80000;
 	public static boolean DEBUG = true;
 
 	ModelView mModelView;
@@ -55,17 +56,24 @@ public class Main {
 				reader.mTopRight, reader.mBottomLeft);
 		mKmlGeography = kmlGeography;
 
+		// Create the metric calc
+		MetricCalculator mc = new MetricCalculator();
+		mc.setupCoverage(kmlGeography);
+		
 		// Create real network
 		BufferedImage colorScheme = EnvironUtils
 				.createGradientImage(null, null);
 		ImageBackedRealEnvironment rn = new ImageBackedRealEnvironment(
 				networkFileName, screen, colorScheme, 0.5f, kmlGeography);
 		mRealNetwork = rn;
-
+		mc.updateRealEnvironment(mRealNetwork);
+		mc.setupAccuracy(kmlGeography, rn);
+		
 		// Create perceived Environment
 		ImageBackedPerceivedEnvironment pn = new ImageBackedPerceivedEnvironment(
-				screen, kmlGeography, rn);
+				screen, kmlGeography, rn, mc);
 		mPerceivedNetwork = pn;
+		mc.updatePerceivedEnvironment(mPerceivedNetwork);
 
 		// calculateAccuracy(rn, pn, kmlGeography);
 

@@ -19,10 +19,9 @@ import java.util.HashMap;
 import javax.swing.JFrame;
 
 import org.turnerha.Main;
+import org.turnerha.environment.MetricCalculator;
 import org.turnerha.environment.PerceivedEnvironment;
 import org.turnerha.environment.RealEnvironment;
-import org.turnerha.environment.utils.BlendComposite;
-import org.turnerha.environment.utils.EnvironUtils;
 import org.turnerha.environment.utils.ImagePanel;
 import org.turnerha.geography.GeoBox;
 import org.turnerha.geography.GeoLocation;
@@ -59,22 +58,22 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	private JFrame mDebugFrame;
 	private ImagePanel mDebugImagePanel;
 
-	private double mCoverageTotal = 0;
-	private double mCoverageCurrent = 0;
-
-	private double mMaximumAccuracyDifference = 0;
-	private double mCurrentAccuracyDifference = 0;
+	// private double mMaximumAccuracyDifference = 0;
+	// private double mCurrentAccuracyDifference = 0;
 
 	private RealEnvironment mRealEnvironment;
 
 	private FileWriter mLog = null;
 
+	private MetricCalculator mMetricCalc;
+
 	public ImageBackedPerceivedEnvironment(Dimension size, KmlGeography m,
-			RealEnvironment re) {
+			RealEnvironment re, MetricCalculator mc) {
 
 		mKmlGeography = m;
 		mProjection = new ProjectionCartesian(m.getGeoBox(), size);
 		mRealEnvironment = re;
+		mMetricCalc = mc;
 
 		mNetwork = createCompatibleTranslucentImage(size.width, size.height);
 
@@ -90,47 +89,35 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 			mDebugFrame.getContentPane().add(mDebugImagePanel);
 			mDebugFrame.setSize(800, 500);
 			mDebugFrame.setVisible(true);
-
-			try {
-				mLog.append("worst,current,accuracy,coverage\n");
-				mLog.append(Double.toString(mMaximumAccuracyDifference))
-						.append(',').append(
-								Double.toString(mCurrentAccuracyDifference))
-						.append(',');
-				double acc = mCurrentAccuracyDifference
-						/ mMaximumAccuracyDifference;
-				mLog.append(Double.toString(acc)).append(',').append(
-						Double.toString(0d)).append('\n');
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			/*
+			 * try { mLog.append("worst,current,accuracy,coverage\n");
+			 * mLog.append(Double.toString(mMaximumAccuracyDifference))
+			 * .append(',').append( Double.toString(mCurrentAccuracyDifference))
+			 * .append(','); double acc = mCurrentAccuracyDifference /
+			 * mMaximumAccuracyDifference;
+			 * mLog.append(Double.toString(acc)).append(',').append(
+			 * Double.toString(0d)).append('\n'); } catch (IOException e) {
+			 * e.printStackTrace(); }
+			 */
 		}
 
-		// Determine the total possible coverage
-		Rectangle geoSize = mKmlGeography.getPixelSize();
-		for (int x = geoSize.x; x < (geoSize.width + geoSize.x); x++)
-			for (int y = geoSize.y; y < (geoSize.height + geoSize.y); y++)
-				if (mKmlGeography.contains(x, y))
-					mCoverageTotal++;
-
-		// Determine the absolute worst accuracy value
-		ImageBackedRealEnvironment ibre = (ImageBackedRealEnvironment) re;
-		for (int x = geoSize.x; x < (geoSize.width + geoSize.x); x++)
-			for (int y = geoSize.y; y < (geoSize.height + geoSize.y); y++)
-				if (mKmlGeography.contains(x, y)) {
-					int pixel = ibre.getValueAt(x, y);
-					int red = (pixel >> 16) & 0xff;
-					int green = (pixel >> 8) & 0xff;
-					int blue = (pixel) & 0xff;
-
-					int diff = Math.max(Math.abs(red - 0), Math.abs(red - 255));
-					diff += Math
-							.max(Math.abs(green - 0), Math.abs(green - 255));
-					diff += Math.max(Math.abs(blue - 0), Math.abs(blue - 255));
-
-					mMaximumAccuracyDifference += diff;
-
-				}
+		/*
+		 * // Determine the absolute worst accuracy value Rectangle geoSize =
+		 * mKmlGeography.getPixelSize(); ImageBackedRealEnvironment ibre =
+		 * (ImageBackedRealEnvironment) re; for (int x = geoSize.x; x <
+		 * (geoSize.width + geoSize.x); x++) for (int y = geoSize.y; y <
+		 * (geoSize.height + geoSize.y); y++) if (mKmlGeography.contains(x, y))
+		 * { int pixel = ibre.getValueAt(x, y); int red = (pixel >> 16) & 0xff;
+		 * int green = (pixel >> 8) & 0xff; int blue = (pixel) & 0xff;
+		 * 
+		 * int diff = Math.max(Math.abs(red - 0), Math.abs(red - 255)); diff +=
+		 * Math .max(Math.abs(green - 0), Math.abs(green - 255)); diff +=
+		 * Math.max(Math.abs(blue - 0), Math.abs(blue - 255));
+		 * 
+		 * mMaximumAccuracyDifference += diff;
+		 * 
+		 * }
+		 */
 	}
 
 	@Override
@@ -138,38 +125,62 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 
 		Point p = mProjection.getPointAt(loc);
 
-		// Subtract current coverage of the 3x3 grid from the total coverage
-		int[] alpha = new int[1];
-		mNetwork.getAlphaRaster().getPixel(p.x, p.y, alpha);
-		double localCoverage = (double) alpha[0] / 255d;
-		mCoverageCurrent -= localCoverage;
+		// Subtract current coverage from the total coverage
+		int[] alphaa = new int[1];
+		mNetwork.getAlphaRaster().getPixel(p.x, p.y, alphaa);
+		double localCoverage = (double) alphaa[0] / 255d;
+		mMetricCalc.changeCurrentCoverage(localCoverage * -1d);
 
 		// Subtract the current accuracy difference (we are going to assume this
 		// pixel is perfect, and then add back in the imperfection once we know)
-		double temp = mCurrentAccuracyDifference;
-		int percPixel = mNetwork.getRGB(p.x, p.y);
-		int realPixel = ((ImageBackedRealEnvironment) mRealEnvironment)
-				.getValueAt(p.x, p.y);
+		{
+			int percPixel = mNetwork.getRGB(p.x, p.y);
+			int realPixel = ((ImageBackedRealEnvironment) mRealEnvironment)
+					.getValueAt(p.x, p.y);
 
-		int pRed = (percPixel >> 16) & 0xff;
-		int pGreen = (percPixel >> 8) & 0xff;
-		int pBlue = (percPixel) & 0xff;
+			int pRed = (percPixel >> 16) & 0xff;
+			int pGreen = (percPixel >> 8) & 0xff;
+			int pBlue = (percPixel) & 0xff;
 
-		int rRed = (realPixel >> 16) & 0xff;
-		int rGreen = (realPixel >> 8) & 0xff;
-		int rBlue = (realPixel) & 0xff;
+			int rRed = (realPixel >> 16) & 0xff;
+			int rGreen = (realPixel >> 8) & 0xff;
+			int rBlue = (realPixel) & 0xff;
 
-		double sumOfPixelDifferences = Math.abs(pRed - rRed);
-		sumOfPixelDifferences += Math.abs(pBlue - rBlue);
-		sumOfPixelDifferences += Math.abs(pGreen - rGreen);
+			// How different the real and perceived differ
+			double sumOfCurrentPixelDifferences = Math.abs(pRed - rRed);
+			sumOfCurrentPixelDifferences += Math.abs(pBlue - rBlue);
+			sumOfCurrentPixelDifferences += Math.abs(pGreen - rGreen);
 
-		// The alpha determines how much we 'trust' the perceived pixel,
-		// so we use that to weight the sum of differences
-		int alphaz = (percPixel >> 24) & 0xff;
-		double weight = (double) alphaz / 255d;
-		sumOfPixelDifferences *= weight;
-		mCurrentAccuracyDifference -= sumOfPixelDifferences;
-		//System.out.println("Removed " + (temp - mCurrentAccuracyDifference));
+			// The maximum worst difference we could have
+			double sumOfWorstPixelDifferences = Math.max(Math.abs(rRed - 0),
+					Math.abs(rRed - 255));
+			sumOfWorstPixelDifferences += Math.max(Math.abs(rGreen - 0), Math
+					.abs(rGreen - 255));
+			sumOfWorstPixelDifferences += Math.max(Math.abs(rBlue - 0), Math
+					.abs(rBlue - 255));
+
+			// The alpha determines how much we 'trust' the current perceived
+			// pixel.
+			// If we don't trust it at all, then the current accuracy estimate
+			// assumes the worst for this pixel. Therefore, we have to subtract
+			// the worst. If we trust it completely, then the current accuracy
+			// estimate includes the difference of this pixel and the real
+			// network with 0 worst-case assumption, so we have to entirely
+			// remove this pixel difference. Following this logic, the alpha is
+			// used to weight both the worst and current pixel differences so
+			// that we remove the correct amount of each from the estimate
+			int alpha = (percPixel >> 24) & 0xff;
+			double weight = (double) alpha / 255d;
+			// weight == closeness to 1 e.g. full trust
+			sumOfCurrentPixelDifferences *= weight;
+			// (1-weight) == closeness to 0 e.g. no trust
+			sumOfWorstPixelDifferences *= (1d - weight);
+
+			double amountToRemove = sumOfCurrentPixelDifferences
+					+ sumOfWorstPixelDifferences;
+			amountToRemove *= -1d;
+			mMetricCalc.changeCurrentAccuracy(amountToRemove);
+		}
 
 		Graphics2D g = (Graphics2D) mNetwork.getGraphics();
 		g.setColor(new Color(value));
@@ -177,57 +188,71 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 		mReadings++;
 
 		// Add back in the coverage
-		alpha = new int[1];
-		mNetwork.getAlphaRaster().getPixel(p.x, p.y, alpha);
-		localCoverage = (double) alpha[0] / 255d;
-		mCoverageCurrent += localCoverage;
+		alphaa = new int[1];
+		mNetwork.getAlphaRaster().getPixel(p.x, p.y, alphaa);
+		localCoverage = (double) alphaa[0] / 255d;
+		mMetricCalc.changeCurrentCoverage(localCoverage);
 
 		// Add back in the difference in accuracy
-		temp = mCurrentAccuracyDifference;
-		int x = p.x;
-		int y = p.y;
-		percPixel = mNetwork.getRGB(x, y);
-		realPixel = ((ImageBackedRealEnvironment) mRealEnvironment).getValueAt(
-				x, y);
+		{
+			int x = p.x;
+			int y = p.y;
+			int percPixel = mNetwork.getRGB(x, y);
+			int realPixel = ((ImageBackedRealEnvironment) mRealEnvironment)
+					.getValueAt(x, y);
 
-		pRed = (percPixel >> 16) & 0xff;
-		pGreen = (percPixel >> 8) & 0xff;
-		pBlue = (percPixel) & 0xff;
+			int pRed = (percPixel >> 16) & 0xff;
+			int pGreen = (percPixel >> 8) & 0xff;
+			int pBlue = (percPixel) & 0xff;
 
-		rRed = (realPixel >> 16) & 0xff;
-		rGreen = (realPixel >> 8) & 0xff;
-		rBlue = (realPixel) & 0xff;
+			int rRed = (realPixel >> 16) & 0xff;
+			int rGreen = (realPixel >> 8) & 0xff;
+			int rBlue = (realPixel) & 0xff;
 
-		sumOfPixelDifferences = Math.abs(pRed - rRed);
-		sumOfPixelDifferences += Math.abs(pBlue - rBlue);
-		sumOfPixelDifferences += Math.abs(pGreen - rGreen);
+			// How different the real and perceived differ
+			double sumOfCurrentPixelDifferences = Math.abs(pRed - rRed);
+			sumOfCurrentPixelDifferences += Math.abs(pBlue - rBlue);
+			sumOfCurrentPixelDifferences += Math.abs(pGreen - rGreen);
 
-		// The alpha determines how much we 'trust' the perceived pixel,
-		// so we use that to weight the sum of differences
-		int alphax = (percPixel >> 24) & 0xff;
-		double weightx = (double) alphax / 255d;
-		sumOfPixelDifferences *= weightx;
-		mCurrentAccuracyDifference += sumOfPixelDifferences;
-		//System.out.println("Added " + (mCurrentAccuracyDifference - temp));
+			// The maximum worst difference we could have
+			double sumOfWorstPixelDifferences = Math.max(Math.abs(rRed - 0),
+					Math.abs(rRed - 255));
+			sumOfWorstPixelDifferences += Math.max(Math.abs(rGreen - 0), Math
+					.abs(rGreen - 255));
+			sumOfWorstPixelDifferences += Math.max(Math.abs(rBlue - 0), Math
+					.abs(rBlue - 255));
 
-		double accuracyDifference = mCurrentAccuracyDifference
-				/ mMaximumAccuracyDifference;
-		//System.out.println("Coverage, Accuracy, Accuracy Diff: "
-		//		+ mCoverageCurrent / mCoverageTotal + ", " + accuracyDifference
-		//		+ ", " + mCurrentAccuracyDifference);
+			// The importance of alpha is explained above
+			int alpha = (percPixel >> 24) & 0xff;
+			double weight = (double) alpha / 255d;
+			sumOfCurrentPixelDifferences *= weight;
+			sumOfWorstPixelDifferences *= (1d - weight);
+
+			double amountToAdd = sumOfCurrentPixelDifferences
+					+ sumOfWorstPixelDifferences;
+			mMetricCalc.changeCurrentAccuracy(amountToAdd);
+		}
+		
+		// double accuracyDifference = mCurrentAccuracyDifference
+		// / mMaximumAccuracyDifference;
+		// System.out.println("Coverage, Accuracy, Accuracy Diff: "
+		// + mCoverageCurrent / mCoverageTotal + ", " + accuracyDifference
+		// + ", " + mCurrentAccuracyDifference);
+		// System.out.println("Coverage: " + mMetricCalc.getCoverage());
+		System.out.println("Accuracy: " + mMetricCalc.getAccuracy());
 
 		if (Main.DEBUG) {
 			mDebugImagePanel.setImage(mNetwork);
+
 			try {
-				mLog.append(Double.toString(mMaximumAccuracyDifference))
-						.append(',').append(
-								Double.toString(mCurrentAccuracyDifference))
-						.append(',')
-						.append(Double.toString(accuracyDifference))
-						.append(',').append(
-								Double.toString(mCoverageCurrent
-										/ mCoverageTotal)).append('\n');
-				mLog.flush();
+				/*
+				 * mLog.append(Double.toString(mMaximumAccuracyDifference))
+				 * .append(',').append(
+				 * Double.toString(mCurrentAccuracyDifference)) .append(',')
+				 * .append(Double.toString(accuracyDifference))
+				 * .append(',').append(
+				 * Double.toString(mMetricCalc.getCoverage())) .append('\n');
+				 */mLog.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

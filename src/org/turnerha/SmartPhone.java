@@ -35,7 +35,11 @@ public class SmartPhone {
 		mInputFrequency = inputFrequency;
 	}
 
-	public void move() {
+	/**
+	 * Gives the smartphone a chance to perform some actions e.g. moving, data
+	 * collection, data reporting, etc
+	 */
+	public void update() {
 		if (mRandom.nextFloat() > mMoveTendenancy)
 			return;
 

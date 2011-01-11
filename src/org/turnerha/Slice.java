@@ -61,7 +61,7 @@ public class Slice {
 		int size = mPhones.size();
 		for (int i = 0; i < size; i++) {
 			SmartPhone sp = mPhones.get(i);
-			sp.move();
+			sp.update();
 
 			if (sp.getShouldRemove()) {
 				mPhones.remove(i);
