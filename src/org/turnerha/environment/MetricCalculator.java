@@ -1,5 +1,6 @@
 package org.turnerha.environment;
 
+import java.awt.Point;
 import java.awt.Rectangle;
 
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
@@ -37,7 +38,8 @@ public class MetricCalculator {
 	}
 
 	public void setupAccuracy(KmlGeography kml, RealEnvironment real) {
-		// Determine the absolute worst accuracy value that we could have on this real environment
+		// Determine the absolute worst accuracy value that we could have on
+		// this real environment
 		Rectangle geoSize = kml.getPixelSize();
 		ImageBackedRealEnvironment ibre = (ImageBackedRealEnvironment) real;
 		for (int x = geoSize.x; x < (geoSize.width + geoSize.x); x++)
@@ -56,7 +58,7 @@ public class MetricCalculator {
 					mAccuracyMaxDifference += diff;
 
 				}
-		
+
 		mAccuracyCurrentDifference = mAccuracyMaxDifference;
 	}
 
@@ -67,6 +69,103 @@ public class MetricCalculator {
 			for (int y = geoSize.y; y < (geoSize.height + geoSize.y); y++)
 				if (geo.contains(x, y))
 					mCoverageTotal++;
+	}
+
+	/**
+	 * This method should be called immediately before a new reading is input.
+	 * It modifies the coverage and accuracy metrics to remove the amounts due
+	 * to the pixels that are about to be updated.
+	 * 
+	 * After this method returns, the reading should be added to the
+	 * {@link PerceivedEnvironment}, and then the method
+	 * {@link MetricCalculator#postNewReading(Point[])} should be called to add
+	 * the effect of the new reading into the coverage and accuracy metrics.
+	 * This entire process effectively replaces the effect of the old pixels
+	 * with the effect due to the new pixels
+	 * 
+	 * @param affectedPixels
+	 */
+	public void preNewReading(Point[] affectedPixels) {
+		for (Point p : affectedPixels) {
+			int percPixel = mPerceived.getRGB(p.x, p.y);
+			int realPixel = mReal.getValueAt(p.x, p.y);
+
+			// Update accuracy
+			// Because we are about to input a new reading, we subtract the
+			// effect of the current pixels on the accuracy
+			double accuracyOfGivenPixels = findChangeInAccuracy(percPixel,
+					realPixel);
+			mAccuracyCurrentDifference -= accuracyOfGivenPixels;
+
+			// Update coverage by removing the effect of the current pixels
+			int alpha = (percPixel >> 24) & 0xff;
+			double localCoverage = (double) alpha / 255d;
+			mCoverageCurrent -= localCoverage;
+		}
+	}
+
+	private double findChangeInAccuracy(int percPixel, int realPixel) {
+		int pRed = (percPixel >> 16) & 0xff;
+		int pGreen = (percPixel >> 8) & 0xff;
+		int pBlue = (percPixel) & 0xff;
+
+		int rRed = (realPixel >> 16) & 0xff;
+		int rGreen = (realPixel >> 8) & 0xff;
+		int rBlue = (realPixel) & 0xff;
+
+		// How much the real and perceived differ
+		double sumOfCurrentPixelDifferences = Math.abs(pRed - rRed);
+		sumOfCurrentPixelDifferences += Math.abs(pBlue - rBlue);
+		sumOfCurrentPixelDifferences += Math.abs(pGreen - rGreen);
+
+		// The maximum worst difference we could have
+		// NOTE This could be cached if it would help performance
+		double sumOfWorstPixelDifferences = Math.max(Math.abs(rRed - 0), Math
+				.abs(rRed - 255));
+		sumOfWorstPixelDifferences += Math.max(Math.abs(rGreen - 0), Math
+				.abs(rGreen - 255));
+		sumOfWorstPixelDifferences += Math.max(Math.abs(rBlue - 0), Math
+				.abs(rBlue - 255));
+
+		// The alpha determines how much we 'trust' the current perceived
+		// pixel.
+		// If we don't trust it at all, then the current accuracy estimate
+		// assumes the worst for this pixel. Therefore, we have to subtract
+		// the worst. If we trust it completely, then the current accuracy
+		// estimate includes the difference of this pixel and the real
+		// network with 0 worst-case assumption, so we have to entirely
+		// remove this pixel difference. Following this logic, the alpha is
+		// used to weight both the worst and current pixel differences so
+		// that we remove the correct amount of each from the estimate
+		int alpha = (percPixel >> 24) & 0xff;
+		double weight = (double) alpha / 255d;
+		// weight == closeness to 1 e.g. full trust
+		sumOfCurrentPixelDifferences *= weight;
+		// (1-weight) == closeness to 0 e.g. no trust
+		sumOfWorstPixelDifferences *= (1d - weight);
+
+		double amountToRemove = sumOfCurrentPixelDifferences
+				+ sumOfWorstPixelDifferences;
+		amountToRemove *= -1d;
+		return amountToRemove;
+	}
+
+	public void postNewReading(Point[] affectedPixels) {
+		for (Point p : affectedPixels) {
+			int percPixel = mPerceived.getRGB(p.x, p.y);
+			int realPixel = mReal.getValueAt(p.x, p.y);
+
+			// Update accuracy by calculating the effect of the given pixels and
+			// adding that in to the current difference
+			double accuracyOfGivenPixels = findChangeInAccuracy(percPixel,
+					realPixel);
+			mAccuracyCurrentDifference += accuracyOfGivenPixels;
+
+			// Update coverage by adding the effect of the current pixels
+			int alpha = (percPixel >> 24) & 0xff;
+			double localCoverage = (double) alpha / 255d;
+			mCoverageCurrent += localCoverage;
+		}
 	}
 
 	/**

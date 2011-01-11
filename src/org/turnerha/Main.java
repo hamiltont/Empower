@@ -59,7 +59,7 @@ public class Main {
 		// Create the metric calc
 		MetricCalculator mc = new MetricCalculator();
 		mc.setupCoverage(kmlGeography);
-		
+
 		// Create real network
 		BufferedImage colorScheme = EnvironUtils
 				.createGradientImage(null, null);
@@ -68,10 +68,10 @@ public class Main {
 		mRealNetwork = rn;
 		mc.updateRealEnvironment(mRealNetwork);
 		mc.setupAccuracy(kmlGeography, rn);
-		
+
 		// Create perceived Environment
 		ImageBackedPerceivedEnvironment pn = new ImageBackedPerceivedEnvironment(
-				screen, kmlGeography, rn, mc);
+				screen, kmlGeography, mc);
 		mPerceivedNetwork = pn;
 		mc.updatePerceivedEnvironment(mPerceivedNetwork);
 
@@ -81,7 +81,8 @@ public class Main {
 		ModelProxy proxy = new ModelProxy(rows, columns);
 
 		// Create ModelBackBuffer
-		ModelController controller = new ModelController(proxy, rows, columns);
+		ModelController controller = new ModelController(proxy, rows, columns,
+				mc);
 
 		Projection rando = new ProjectionCartesian(kmlGeography.getGeoBox(),
 				screen);
