@@ -138,14 +138,6 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 
 		Point p = mProjection.getPointAt(loc);
 
-		BufferedImage mReading = mReadingCircles.get(new Integer(value));
-
-		if (mReading == null) {
-			Color c = new Color(value);
-			mReading = EnvironUtils.createReadingImage(1, c);
-			mReadingCircles.put(new Integer(value), mReading);
-		}
-
 		// Subtract current coverage of the 3x3 grid from the total coverage
 		int[] alpha = new int[1];
 		mNetwork.getAlphaRaster().getPixel(p.x, p.y, alpha);
@@ -177,12 +169,11 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 		double weight = (double) alphaz / 255d;
 		sumOfPixelDifferences *= weight;
 		mCurrentAccuracyDifference -= sumOfPixelDifferences;
-
-		System.out.println("Removed " + (temp - mCurrentAccuracyDifference));
+		//System.out.println("Removed " + (temp - mCurrentAccuracyDifference));
 
 		Graphics2D g = (Graphics2D) mNetwork.getGraphics();
-		g.setComposite(BlendComposite.AverageInclAlpha.derive(1f));
-		g.drawImage(mReading, null, p.x, p.y);
+		g.setColor(new Color(value));
+		g.drawLine(p.x, p.y, p.x, p.y);
 		mReadings++;
 
 		// Add back in the coverage
@@ -217,7 +208,7 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 		double weightx = (double) alphax / 255d;
 		sumOfPixelDifferences *= weightx;
 		mCurrentAccuracyDifference += sumOfPixelDifferences;
-		System.out.println("Added " + (mCurrentAccuracyDifference - temp));
+		//System.out.println("Added " + (mCurrentAccuracyDifference - temp));
 
 		double accuracyDifference = mCurrentAccuracyDifference
 				/ mMaximumAccuracyDifference;
