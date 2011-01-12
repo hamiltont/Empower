@@ -6,8 +6,6 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ModelProxy {
 
 	private Slice[][] mSlices = null;
-	
-	private int mFrameCount = 0;
 
 	// Plain jane synchronized allows the possibility that swap will be called
 	// while the rendering is using the model pointer. This would result in the
@@ -27,11 +25,6 @@ public class ModelProxy {
 	public Slice[][] swapModel(Slice[][] newModel) {
 		Slice[][] temp = mSlices;
 		mSlices = newModel;
-		++mFrameCount;
 		return temp;
-	}
-	
-	public int getFrameCount() {
-		return mFrameCount;
 	}
 }

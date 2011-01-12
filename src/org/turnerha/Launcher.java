@@ -22,7 +22,7 @@ public class Launcher {
 	private static JDialog jd;
 	static JTextField mMoveTendenancy = new JTextField("1.0", 3);
 	static JTextField mMobility = new JTextField("30", 3);
-	static JTextField mTimePerHB = new JTextField("1.5", 3);
+	static JTextField mTimePerHB = new JTextField("1", 3);
 	static JTextField mInputFreq = new JTextField("1.0", 3);
 	static ButtonGroup mLocationAccuracy = new ButtonGroup();
 	static JComboBox mGeoFile;
@@ -128,9 +128,9 @@ public class Launcher {
 			// Not supported yet
 			int mobility = 30;
 
-			float timePerHB = 1.5f;
+			int timePerHB = 1;
 			try {
-				timePerHB = Float.parseFloat(mTimePerHB.getText());
+				timePerHB = Integer.parseInt(mTimePerHB.getText());
 			} catch (NumberFormatException a) {
 			}
 

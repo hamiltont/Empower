@@ -90,16 +90,14 @@ class ModelView extends Component {
 				}
 
 			g.setColor(Color.white);
-			g.drawString("Heartbeats: " + proxy.getFrameCount(), 10, 40);
+			
+			g.drawString("Heartbeats: " + controller_.getHeartbeatCount(), 10, 40);
 
 			// if (proxy.getFrameCount() == 200)
 			// mRealEnviron.loadNewEnvironment("foo");
 
-			long timeInMs = Math.round(Main.hoursPerHeartbeat * 60f * 1000f)
-					* proxy.getFrameCount();
-			double timeInDays = (timeInMs * 1.0) / (1000d * 60d * 60d * 24d);
-			String days = String.format("%1$5.3f", timeInDays);
-			g.drawString("Simulation Time (days):" + days, 10, 55);
+			//String days = String.format("%1$5.3f", timeInDays);
+			//g.drawString("Simulation Time (days):" + days, 10, 55);
 			g.drawString("Slowdown Factor: " + controller_.sleepTime.get()
 					+ " (Press + or - to change)", 10, 70);
 

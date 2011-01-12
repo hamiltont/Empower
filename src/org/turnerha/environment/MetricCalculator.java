@@ -18,6 +18,21 @@ public class MetricCalculator {
 	private double mAccuracyMaxDifference = 0;
 	private double mAccuracyCurrentDifference = 0;
 
+	// The following two are used to calculate the number of "useless" reading
+	// inputs. If a pre-reading change plus a post-reading change sum to zero,
+	// then a particular reading was useless and the mWasted counts are updated
+	private double mWasted_lastChangeInAccuracy = 0;
+	private double mWasted_lastChangeInCoverage = 0;
+
+	private int mWastedDueToAccuracy = 0;
+	private int mWastedDueToCoverage = 0;
+	private int mWastedDueToBoth = 0;
+
+	// Keeps track of the total change that has occurred in both coverage and
+	// accuracy
+	private double mUsefulnessTotal = 0;
+	private int mUsefulnessCount = 0; // Counts the total number of readings
+
 	public MetricCalculator() {
 	}
 
@@ -100,11 +115,13 @@ public class MetricCalculator {
 			double accuracyOfGivenPixels = findChangeInAccuracy(percPixel,
 					realPixel);
 			mAccuracyCurrentDifference -= accuracyOfGivenPixels;
+			mWasted_lastChangeInAccuracy -= accuracyOfGivenPixels;
 
 			// Update coverage by removing the effect of the current pixels
 			int alpha = (percPixel >> 24) & 0xff;
 			double localCoverage = (double) alpha / 255d;
 			mCoverageCurrent -= localCoverage;
+			mWasted_lastChangeInCoverage -= localCoverage;
 		}
 	}
 
@@ -163,12 +180,32 @@ public class MetricCalculator {
 			double accuracyOfGivenPixels = findChangeInAccuracy(percPixel,
 					realPixel);
 			mAccuracyCurrentDifference += accuracyOfGivenPixels;
+			mWasted_lastChangeInAccuracy += accuracyOfGivenPixels;
 
 			// Update coverage by adding the effect of the current pixels
 			int alpha = (percPixel >> 24) & 0xff;
 			double localCoverage = (double) alpha / 255d;
 			mCoverageCurrent += localCoverage;
+			mWasted_lastChangeInCoverage += localCoverage;
 		}
+
+		// Calculate the number of wasted readings
+		if (mWasted_lastChangeInAccuracy == 0
+				&& mWasted_lastChangeInCoverage == 0)
+			mWastedDueToBoth++;
+		else if (mWasted_lastChangeInAccuracy == 0)
+			mWastedDueToAccuracy++;
+		else if (mWasted_lastChangeInCoverage == 0)
+			mWastedDueToCoverage++;
+
+		// Update our numbers for usefulness, scaling appropriately
+		mUsefulnessTotal += Math.abs(mWasted_lastChangeInAccuracy
+				/ mAccuracyMaxDifference)
+				+ Math.abs(mWasted_lastChangeInCoverage / mCoverageTotal);
+		mUsefulnessCount++;
+
+		mWasted_lastChangeInAccuracy = 0;
+		mWasted_lastChangeInCoverage = 0;
 	}
 
 	/**
@@ -204,6 +241,48 @@ public class MetricCalculator {
 			return -1;
 
 		return mCoverageCurrent / mCoverageTotal;
+	}
+
+	/**
+	 * Returns the number of readings that were partially useless because they
+	 * provided no change in coverage. However, these readings <b>did</b>
+	 * provide a change in accuracy, so they were not entirely wasted
+	 */
+	public int getUselessReadingsDueToCoverage() {
+		return mWastedDueToCoverage;
+	}
+
+	/**
+	 * Returns the number of readings that were partially useless because they
+	 * provided no change in accuracy. However, these readings <b>did</b>
+	 * provide a change in coverage, so they were not entirely wasted
+	 */
+	public int getUselessReadingsDueToAccuracy() {
+		return mWastedDueToAccuracy;
+	}
+
+	/**
+	 * Returns the number of readings that were entirely useless. That is, the
+	 * number of readings that resulted in absolutely no change in either
+	 * coverage or accuracy.
+	 */
+	public int getUselessReadingsDueToBoth() {
+		return mWastedDueToBoth;
+	}
+
+	/**
+	 * Returns a number that represents the amount of change introduced per
+	 * reading. This is not anchored to any real-world construct, but does allow
+	 * comparisons within a single simulation of the amount of data gathered
+	 * from each reading on average
+	 */
+	public double getUsefulnessPerReading() {
+		return mUsefulnessTotal / (double) mUsefulnessCount;
+	}
+
+	public void resetUsefulnessPerReading() {
+		mUsefulnessCount = 0;
+		mUsefulnessTotal = 0;
 	}
 
 }

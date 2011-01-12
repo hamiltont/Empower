@@ -26,11 +26,11 @@ import org.turnerha.geography.ProjectionCartesian;
 
 public class Main {
 
-	public static float hoursPerHeartbeat = 1000;
-	public static int rows = 1; // Do not change this unless you are sure
+	public static int hoursPerHeartbeat = 1;
+	public static int rows = 1;    // Do not change this unless you are sure
 	public static int columns = 1; // you can share Smart-phones between models
-	public static int phonesPerSlice = 300;
-	public static boolean DEBUG = true;
+	public static int phonesPerSlice = 500;
+	public static boolean DEBUG = false;
 
 	ModelView mModelView;
 	ImageBackedRealEnvironment mRealNetwork;
@@ -39,7 +39,7 @@ public class Main {
 	private KmlGeography mKmlGeography;
 
 	public Main(File geoFileNameKml, File networkFileName,
-			float moveTendenancy, int mobilityInMeters, float timePerHeartbeat,
+			float moveTendenancy, int mobilityInMeters, int timePerHeartbeat,
 			float inputFrequency, boolean usingGPS) {
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 		screen.height -= 20;
@@ -59,6 +59,8 @@ public class Main {
 		// Create the metric calc
 		MetricCalculator mc = new MetricCalculator();
 		mc.setupCoverage(kmlGeography);
+		
+		new Log(mc);
 
 		// Create real network
 		BufferedImage colorScheme = EnvironUtils
@@ -170,6 +172,7 @@ public class Main {
 
 			case KeyEvent.VK_ESCAPE:
 				// Means quit
+				Log.close();
 				System.exit(0);
 
 			case KeyEvent.VK_A:

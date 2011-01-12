@@ -13,6 +13,8 @@ public class ModelController {
 	public AtomicInteger sleepTime = new AtomicInteger(100);
 	private MetricCalculator mMetricCalc;
 
+	private int mHeartbeatCount = 0;
+	
 	FileWriter foo = null;
 
 	public ModelController(ModelProxy proxy, int rows, int columns,
@@ -37,20 +39,10 @@ public class ModelController {
 		mFinishedSlices[slice.getRow()][slice.getColumn()] = slice;
 
 		if (allSlicesAreReady()) {
-
+			mHeartbeatCount++;
+			
 			// Print out some metrics
-			//System.out.println("Acc, Covg: " + mMetricCalc.getAccuracy() + ", "
-			//		+ mMetricCalc.getCoverage());
-
-			try {
-				foo.append(Double.toString(mMetricCalc.getAccuracy())).append(',')
-						.append(Double.toString(mMetricCalc.getCoverage())).append(
-								'\n');
-				foo.flush();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			Log.log(Main.hoursPerHeartbeat * mHeartbeatCount);
 
 			// Slow down the simulation a bit
 			Thread.sleep(sleepTime.get());
@@ -80,6 +72,10 @@ public class ModelController {
 					return false;
 
 		return true;
+	}
+	
+	public int getHeartbeatCount() {
+		return mHeartbeatCount;
 	}
 
 }

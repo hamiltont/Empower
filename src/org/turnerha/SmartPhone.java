@@ -42,6 +42,10 @@ public class SmartPhone {
 	public void update() {
 		if (mRandom.nextFloat() > mMoveTendenancy)
 			return;
+		
+		// Always report for now
+		// if (mRandom.nextFloat() > mInputFrequency)
+		// return;
 
 		double xChange = mRandom.nextDouble() / 100d;
 		double yChange = mRandom.nextDouble() / 100d;
@@ -60,8 +64,6 @@ public class SmartPhone {
 
 		for (MyPolygon poly : mCounties)
 			if (poly.mPoly.contains(mProjection.getPointAt(mPoint))) {
-				if (mRandom.nextFloat() > mInputFrequency)
-					return;
 
 				int rgb = mRealNetwork.getValueAt(mPoint);
 				mPerceivedNetwork.addReading(rgb, mPoint);
