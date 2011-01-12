@@ -3,9 +3,12 @@ package org.turnerha;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.turnerha.environment.MetricCalculator;
+import org.turnerha.environment.RealEnvironment;
+import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 
 public class ModelController {
 	private Slice[][] mFinishedSlices;
@@ -14,23 +17,20 @@ public class ModelController {
 	private MetricCalculator mMetricCalc;
 
 	private int mHeartbeatCount = 0;
-	
-	FileWriter foo = null;
+	private HashMap<Integer, File> mRealEnvironMap;
+	private RealEnvironment mRealEnvironment;
 
 	public ModelController(ModelProxy proxy, int rows, int columns,
-			MetricCalculator mc) {
+			MetricCalculator mc, HashMap<Integer, File> realEnvironmentMap,
+			RealEnvironment re) {
 		mFinishedSlices = new Slice[rows][columns];
 		this.proxy = proxy;
 
 		mMetricCalc = mc;
 
-		try {
-			foo = new FileWriter(new File("acc-covg.csv"));
-			foo.append("Accuracy,Coverage\n");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		mRealEnvironMap = realEnvironmentMap;
+		mRealEnvironment = re;
+
 	}
 
 	public synchronized void completeSlice(Slice slice)
@@ -40,9 +40,20 @@ public class ModelController {
 
 		if (allSlicesAreReady()) {
 			mHeartbeatCount++;
-			
+
 			// Print out some metrics
 			Log.log(Main.hoursPerHeartbeat * mHeartbeatCount);
+
+			// Determine if the real network needs to be replaced
+			if (mRealEnvironMap.containsKey(new Integer(mHeartbeatCount))) {
+				((ImageBackedRealEnvironment) mRealEnvironment)
+						.loadNewEnvironment(mRealEnvironMap.get(new Integer(
+								mHeartbeatCount)));
+				mMetricCalc.updateRealEnvironment(mRealEnvironment);
+			}
+
+			// Reset the usefulness variable
+			mMetricCalc.resetUsefulnessPerReading();
 
 			// Slow down the simulation a bit
 			Thread.sleep(sleepTime.get());
@@ -73,7 +84,7 @@ public class ModelController {
 
 		return true;
 	}
-	
+
 	public int getHeartbeatCount() {
 		return mHeartbeatCount;
 	}

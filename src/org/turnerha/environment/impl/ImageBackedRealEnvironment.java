@@ -148,4 +148,8 @@ public class ImageBackedRealEnvironment implements RealEnvironment {
 		return mRealEnviron;
 	}
 
+	public KmlGeography getKml() {
+		return mKmlGeography;
+	}
+
 }

@@ -119,9 +119,9 @@ public class Launcher {
 			});
 			File nwFile = nwFiles[0];
 
-			float moveTend = 1f;
+			double probabilityOfMoving = 1d;
 			try {
-				moveTend = Float.parseFloat(mMoveTendenancy.getText());
+				probabilityOfMoving = Double.parseDouble(mMoveTendenancy.getText());
 			} catch (NumberFormatException a) {
 			}
 
@@ -140,7 +140,7 @@ public class Launcher {
 			} catch (NumberFormatException a) {
 			}
 
-			new Main(geoFile, nwFile, moveTend, mobility, timePerHB, inputFreq,
+			new Main(geoFile, nwFile, probabilityOfMoving, mobility, timePerHB, inputFreq,
 					true);
 		}
 	};

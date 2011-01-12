@@ -10,6 +10,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
@@ -23,11 +24,14 @@ import org.turnerha.geography.KmlGeography;
 import org.turnerha.geography.KmlReader;
 import org.turnerha.geography.Projection;
 import org.turnerha.geography.ProjectionCartesian;
+import org.turnerha.policys.collection.ConstantDataCollection;
+import org.turnerha.policys.collection.DataCollectionPolicy;
+import org.turnerha.policys.collection.MobilityBasedDataCollection;
 
 public class Main {
 
 	public static int hoursPerHeartbeat = 1;
-	public static int rows = 1;    // Do not change this unless you are sure
+	public static int rows = 1; // Do not change this unless you are sure
 	public static int columns = 1; // you can share Smart-phones between models
 	public static int phonesPerSlice = 500;
 	public static boolean DEBUG = false;
@@ -39,8 +43,8 @@ public class Main {
 	private KmlGeography mKmlGeography;
 
 	public Main(File geoFileNameKml, File networkFileName,
-			float moveTendenancy, int mobilityInMeters, int timePerHeartbeat,
-			float inputFrequency, boolean usingGPS) {
+			double probabilityOfMoving, int mobilityInMeters,
+			int timePerHeartbeat, float inputFrequency, boolean usingGPS) {
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 		screen.height -= 20;
 
@@ -59,7 +63,7 @@ public class Main {
 		// Create the metric calc
 		MetricCalculator mc = new MetricCalculator();
 		mc.setupCoverage(kmlGeography);
-		
+
 		new Log(mc);
 
 		// Create real network
@@ -69,7 +73,6 @@ public class Main {
 				networkFileName, screen, colorScheme, 0.5f, kmlGeography);
 		mRealNetwork = rn;
 		mc.updateRealEnvironment(mRealNetwork);
-		mc.setupAccuracy(kmlGeography, rn);
 
 		// Create perceived Environment
 		ImageBackedPerceivedEnvironment pn = new ImageBackedPerceivedEnvironment(
@@ -82,15 +85,20 @@ public class Main {
 		// Create ModelFrontBuffer
 		ModelProxy proxy = new ModelProxy(rows, columns);
 
-		// Create ModelBackBuffer
+		// Create a random hashset of real environments to try
+		HashMap<Integer, File> mEnvironmentalMap = new HashMap<Integer, File>(2);
+		mEnvironmentalMap.put(new Integer(730), new File("network-images/solid_color.png"));
 		ModelController controller = new ModelController(proxy, rows, columns,
-				mc);
+				mc, mEnvironmentalMap, rn);
 
 		Projection rando = new ProjectionCartesian(kmlGeography.getGeoBox(),
 				screen);
 
 		// Build Slices
+		DataCollectionPolicy policy = new MobilityBasedDataCollection(r);
+		// DataCollectionPolicy policy = new ConstantDataCollection();
 		Slice[][] slices = new Slice[rows][columns];
+		Random probOfMoving = new Random(r.nextLong());
 		for (int row : Util.range(rows))
 			for (int col : Util.range(columns)) {
 				ArrayList<SmartPhone> slicePhones = new ArrayList<SmartPhone>();
@@ -103,8 +111,8 @@ public class Main {
 					} while (false == kmlGeography.contains(x, y));
 
 					slicePhones.add(new SmartPhone(new Point(x, y), reader
-							.getPoly(), pn, rn, moveTendenancy, inputFrequency,
-							rando));
+							.getPoly(), pn, rn, probOfMoving.nextDouble(),
+							inputFrequency, rando, policy));
 				}
 
 				Slice s = new Slice(slicePhones, controller, row, col);

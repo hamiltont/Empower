@@ -33,14 +33,18 @@ public class MetricCalculator {
 	private double mUsefulnessTotal = 0;
 	private int mUsefulnessCount = 0; // Counts the total number of readings
 
+	/** Used when loading in a new real environment */
+	private boolean mThisIsFirstEnvironment = true;
+
 	public MetricCalculator() {
 	}
 
 	/** Used to inject a new real environment */
 	public void updateRealEnvironment(RealEnvironment re) {
-		if (re instanceof ImageBackedRealEnvironment)
+		if (re instanceof ImageBackedRealEnvironment) {
 			mReal = (ImageBackedRealEnvironment) re;
-		else
+			setupAccuracy(mReal.getKml(), mReal);
+		} else
 			throw new IllegalArgumentException("Must be image backed for now");
 	}
 
@@ -52,7 +56,9 @@ public class MetricCalculator {
 			throw new IllegalArgumentException("Must be image backed for now");
 	}
 
-	public void setupAccuracy(KmlGeography kml, RealEnvironment real) {
+	private void setupAccuracy(KmlGeography kml, RealEnvironment real) {
+		mAccuracyMaxDifference = 0;
+		
 		// Determine the absolute worst accuracy value that we could have on
 		// this real environment
 		Rectangle geoSize = kml.getPixelSize();
@@ -74,7 +80,32 @@ public class MetricCalculator {
 
 				}
 
-		mAccuracyCurrentDifference = mAccuracyMaxDifference;
+		// If this is the first environment, we know that we know absolutely
+		// nothing about this environment so we can assume the worst. If this is
+		// not the first environment, we have to walk each pixel and determine
+		// how accurate our current perceived environment is to this new real
+		// environment
+		if (mThisIsFirstEnvironment) {
+			mAccuracyCurrentDifference = mAccuracyMaxDifference;
+			mThisIsFirstEnvironment = false;
+		} else {
+			mAccuracyCurrentDifference = 0;
+
+			Rectangle s = kml.getPixelSize();
+			for (int x = s.x; x < s.x + s.width; x++)
+				for (int y = s.y; y < s.y + s.height; y++) {
+					if (kml.contains(x, y) == false)
+						continue;
+
+					int perc = mPerceived.getRGB(x, y);
+					int realp = ((ImageBackedRealEnvironment) real).getValueAt(
+							x, y);
+
+					mAccuracyCurrentDifference += findChangeInAccuracy(perc,
+							realp);
+				}
+		}
+
 	}
 
 	public void setupCoverage(KmlGeography geo) {
@@ -148,9 +179,14 @@ public class MetricCalculator {
 		sumOfWorstPixelDifferences += Math.max(Math.abs(rBlue - 0), Math
 				.abs(rBlue - 255));
 
-		// The alpha determines how much we 'trust' the current perceived
-		// pixel.
-		// If we don't trust it at all, then the current accuracy estimate
+		// The alpha determines how much coverage we have at the current
+		// perceived
+		// pixel e.g. do we have a few readings at that location. Essentially,
+		// the alpha value is used to transition the accuracy metric from the
+		// zone of "we have no knowledge about this area" to a zone of
+		// "we have some knowledge. It may be wildly wrong, but we we do have a number". 
+		
+		// If we don't have any readings, then the current accuracy estimate
 		// assumes the worst for this pixel. Therefore, we have to subtract
 		// the worst. If we trust it completely, then the current accuracy
 		// estimate includes the difference of this pixel and the real

@@ -9,6 +9,7 @@ import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 import org.turnerha.geography.GeoLocation;
 import org.turnerha.geography.MyPolygon;
 import org.turnerha.geography.Projection;
+import org.turnerha.policys.collection.DataCollectionPolicy;
 
 public class SmartPhone {
 
@@ -18,20 +19,24 @@ public class SmartPhone {
 	private boolean mShouldRemove = false;
 	private ImageBackedPerceivedEnvironment mPerceivedNetwork;
 	private ImageBackedRealEnvironment mRealNetwork;
-	private float mMoveTendenancy;
+	private double mProbabilityOfMoving;
 	private float mInputFrequency;
 	private Projection mProjection;
+	
+	private DataCollectionPolicy mDataCollectionPolicy;
 
 	public SmartPhone(Point p, List<MyPolygon> counties,
 			ImageBackedPerceivedEnvironment pn, ImageBackedRealEnvironment rn,
-			float moveTendenancy, float inputFrequency, Projection proj) {
+			double probabilityOfMovig, float inputFrequency, Projection proj,
+			DataCollectionPolicy dataPolicy) {
 		mPoint = proj.getLocationAt(p);
 		mCounties = counties;
 		mPerceivedNetwork = pn;
 		mRealNetwork = rn;
 		mProjection = proj;
+		mDataCollectionPolicy = dataPolicy;
 
-		mMoveTendenancy = moveTendenancy;
+		mProbabilityOfMoving = probabilityOfMovig;
 		mInputFrequency = inputFrequency;
 	}
 
@@ -40,9 +45,9 @@ public class SmartPhone {
 	 * collection, data reporting, etc
 	 */
 	public void update() {
-		if (mRandom.nextFloat() > mMoveTendenancy)
+		if (mRandom.nextDouble() > mProbabilityOfMoving)
 			return;
-		
+
 		// Always report for now
 		// if (mRandom.nextFloat() > mInputFrequency)
 		// return;
@@ -62,9 +67,13 @@ public class SmartPhone {
 		else
 			mPoint.lat -= yChange;
 
+		// No sense collecting data if we have moved ourself out of the network
 		for (MyPolygon poly : mCounties)
 			if (poly.mPoly.contains(mProjection.getPointAt(mPoint))) {
-
+				
+				if (mDataCollectionPolicy.shouldCollectData(this) == false)
+					return;
+				
 				int rgb = mRealNetwork.getValueAt(mPoint);
 				mPerceivedNetwork.addReading(rgb, mPoint);
 
@@ -80,5 +89,9 @@ public class SmartPhone {
 
 	public boolean getShouldRemove() {
 		return mShouldRemove;
+	}
+
+	public double getProbabilityOfMoving() {
+		return mProbabilityOfMoving;
 	}
 }

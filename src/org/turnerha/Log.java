@@ -30,8 +30,10 @@ public class Log {
 
 		try {
 			mLogFile = new FileWriter(new File("log.csv"));
-			mLogFile.append("SystemTime,Simulation Time,Coverage"
-					+ ",Accuracy,Usefulness per Reading\n");
+			mLogFile
+					.append("SystemTime,Simulation Time,Coverage"
+							+ ",Accuracy,Usefulness per Reading,Wasted Readings Total,"
+							+ "Wasted Due To Accuracy, Wasted Due To Coverage, Wasted Due To Both\n");
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -45,26 +47,34 @@ public class Log {
 			throw new IllegalStateException("Has not been initialized");
 
 		try {
-			instance_.mLogFile
-					.append(Long.toString(System.currentTimeMillis())).append(
-							',')
-					.append(Integer.toString(simulationTimeInHours))
-					.append(',').append(
-							Double
-									.toString(instance_.mMetricCalc
-											.getCoverage())).append(',')
-					.append(
-							Double
-									.toString(instance_.mMetricCalc
-											.getAccuracy())).append(',')
-					.append(
-							Double.toString(instance_.mMetricCalc
-									.getUsefulnessPerReading())).append('\n');
+			int wastedTotal = instance_.mMetricCalc
+					.getUselessReadingsDueToAccuracy()
+					+ instance_.mMetricCalc.getUselessReadingsDueToBoth()
+					+ instance_.mMetricCalc.getUselessReadingsDueToCoverage();
+			MetricCalculator mc = instance_.mMetricCalc;
+
+			
+			final StringBuilder lineBuilder = new StringBuilder(Long
+					.toString(System.currentTimeMillis()));
+			lineBuilder.append(',');
+			lineBuilder.append(simulationTimeInHours).append(',');
+			lineBuilder.append(mc.getCoverage()).append(',');
+			lineBuilder.append(mc.getAccuracy()).append(',');
+			lineBuilder.append(mc.getUsefulnessPerReading()).append(',');
+			lineBuilder.append(wastedTotal).append(',');
+			lineBuilder.append(mc.getUselessReadingsDueToCoverage())
+					.append(',');
+			lineBuilder.append(mc.getUselessReadingsDueToAccuracy())
+					.append(',');
+			lineBuilder.append(mc.getUselessReadingsDueToBoth()).append('\n');
+
+			instance_.mLogFile.append(lineBuilder.toString());
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public static void close() {
 		if (instance_ == null)
 			throw new IllegalStateException("Has not been initialized");
