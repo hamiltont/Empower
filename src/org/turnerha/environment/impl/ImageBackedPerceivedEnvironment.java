@@ -19,6 +19,8 @@ import javax.swing.JFrame;
 import org.turnerha.Main;
 import org.turnerha.environment.MetricCalculator;
 import org.turnerha.environment.PerceivedEnvironment;
+import org.turnerha.environment.utils.BlendComposite;
+import org.turnerha.environment.utils.EnvironUtils;
 import org.turnerha.environment.utils.ImagePanel;
 import org.turnerha.geography.GeoBox;
 import org.turnerha.geography.GeoLocation;
@@ -41,7 +43,7 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 
 	/** Used to make the network image paint at 50% opacity */
 	private RescaleOp mAlphaOp;
-	
+
 	/**
 	 * The projection between the pixel values in the backing image model data
 	 * and real-world latitude longitude
@@ -55,7 +57,7 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 
 	public ImageBackedPerceivedEnvironment(Dimension size, KmlGeography kml,
 			MetricCalculator mc) {
-				
+
 		mProjection = new ProjectionCartesian(kml.getGeoBox(), size);
 		mMetricCalc = mc;
 
@@ -64,8 +66,8 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 		// Create a rescale filter operation to makes the image 50% opaque
 		float[] scales = { 1f, 1f, 1f, 0.5f };
 		float[] offsets = new float[4];
-		mAlphaOp = new RescaleOp(scales, offsets, null);		
-		
+		mAlphaOp = new RescaleOp(scales, offsets, null);
+
 		if (Main.DEBUG) {
 			mDebugFrame = new JFrame("Perceived black/white");
 			mDebugImagePanel = new ImagePanel(mNetwork);
@@ -82,15 +84,30 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 		Point p = mProjection.getPointAt(loc);
 
 		// Let the metric calculator remove the effect due to p
-		mMetricCalc.preNewReading(new Point[] { p });
+		Point[] affectedPoints = new Point[5 * 5];
+		int pos = 0;
+		for (int x = p.x - 2; x < p.x + 3; x++)
+			for (int y = p.y - 2; y < p.y + 3; y++)
+				affectedPoints[pos++] = new Point(x, y);
+		mMetricCalc.preNewReading(affectedPoints);
+
+		BufferedImage mReading = mReadingCircles.get(new Integer(value));
+
+		if (mReading == null) {
+			Color c = new Color(value);
+			mReading = EnvironUtils.createReadingImage(5, c);
+			mReadingCircles.put(new Integer(value), mReading);
+		}
 
 		Graphics2D g = (Graphics2D) mNetwork.getGraphics();
-		g.setColor(new Color(value));
-		g.drawLine(p.x, p.y, p.x, p.y);
+		// g.setColor(new Color(value));
+		// g.drawLine(p.x, p.y, p.x, p.y);
+		g.setComposite(BlendComposite.AverageInclAlpha.derive(1f));
+		g.drawImage(mReading, null, p.x - 2, p.y - 2);
 		mReadings++;
 
 		// Let the metric calculator add back in the effect due to p
-		mMetricCalc.postNewReading(new Point[] { p });
+		mMetricCalc.postNewReading(affectedPoints);
 
 		if (Main.DEBUG) {
 			mDebugImagePanel.setImage(mNetwork);

@@ -1,5 +1,8 @@
 package org.turnerha;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.turnerha.environment.MetricCalculator;
@@ -10,12 +13,22 @@ public class ModelController {
 	public AtomicInteger sleepTime = new AtomicInteger(100);
 	private MetricCalculator mMetricCalc;
 
+	FileWriter foo = null;
+
 	public ModelController(ModelProxy proxy, int rows, int columns,
 			MetricCalculator mc) {
 		mFinishedSlices = new Slice[rows][columns];
 		this.proxy = proxy;
 
 		mMetricCalc = mc;
+
+		try {
+			foo = new FileWriter(new File("acc-covg.csv"));
+			foo.append("Accuracy,Coverage\n");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	public synchronized void completeSlice(Slice slice)
@@ -26,8 +39,18 @@ public class ModelController {
 		if (allSlicesAreReady()) {
 
 			// Print out some metrics
-			System.out.println("Acc, Covg: " + mMetricCalc.getAccuracy() + ", "
-					+ mMetricCalc.getCoverage());
+			//System.out.println("Acc, Covg: " + mMetricCalc.getAccuracy() + ", "
+			//		+ mMetricCalc.getCoverage());
+
+			try {
+				foo.append(Double.toString(mMetricCalc.getAccuracy())).append(',')
+						.append(Double.toString(mMetricCalc.getCoverage())).append(
+								'\n');
+				foo.flush();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 
 			// Slow down the simulation a bit
 			Thread.sleep(sleepTime.get());

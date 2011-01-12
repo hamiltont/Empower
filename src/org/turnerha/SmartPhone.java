@@ -43,8 +43,8 @@ public class SmartPhone {
 		if (mRandom.nextFloat() > mMoveTendenancy)
 			return;
 
-		double xChange = mRandom.nextDouble() / 1000d;
-		double yChange = mRandom.nextDouble() / 1000d;
+		double xChange = mRandom.nextDouble() / 100d;
+		double yChange = mRandom.nextDouble() / 100d;
 		boolean xRight = mRandom.nextBoolean();
 		boolean yUp = mRandom.nextBoolean();
 

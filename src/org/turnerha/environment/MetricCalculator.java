@@ -85,6 +85,10 @@ public class MetricCalculator {
 	 * 
 	 * @param affectedPixels
 	 */
+	// TODO - Point[] is a pretty poor way of passing in the points. We allocate
+	// a ton of new point objects, which are then just converted back into x/y.
+	// Why not just allocate the x/y array (or better yet, pass in the top left
+	// x/y and the w/h)
 	public void preNewReading(Point[] affectedPixels) {
 		for (Point p : affectedPixels) {
 			int percPixel = mPerceived.getRGB(p.x, p.y);
@@ -144,10 +148,9 @@ public class MetricCalculator {
 		// (1-weight) == closeness to 0 e.g. no trust
 		sumOfWorstPixelDifferences *= (1d - weight);
 
-		double amountToRemove = sumOfCurrentPixelDifferences
+		final double amountOfChange = sumOfCurrentPixelDifferences
 				+ sumOfWorstPixelDifferences;
-		amountToRemove *= -1d;
-		return amountToRemove;
+		return amountOfChange;
 	}
 
 	public void postNewReading(Point[] affectedPixels) {
