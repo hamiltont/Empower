@@ -13,7 +13,7 @@ import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 public class ModelController {
 	private Slice[][] mFinishedSlices;
 	private ModelProxy proxy;
-	public AtomicInteger sleepTime = new AtomicInteger(100);
+	public AtomicInteger sleepTime = new AtomicInteger(200);
 	private MetricCalculator mMetricCalc;
 
 	private int mHeartbeatCount = 0;
@@ -52,11 +52,18 @@ public class ModelController {
 				mMetricCalc.updateRealEnvironment(mRealEnvironment);
 			}
 
-			// Reset the usefulness variable
-			mMetricCalc.resetUsefulnessPerReading();
+			// Reset the usefulness measures so they are calculated on a
+			// per-heartbeat lever
+			mMetricCalc.resetUselessReadingCounts();
+			mMetricCalc.resetTotalReadingCount();
+			//mMetricCalc.resetUsefulnessPerReading();
+
+			// Just for now
+			if (mHeartbeatCount == 6000)
+				System.exit(0);
 
 			// Slow down the simulation a bit
-			Thread.sleep(sleepTime.get());
+			// Thread.sleep(sleepTime.get());
 
 			// Swap front and back model pointers
 			proxy.modelLock.lock();

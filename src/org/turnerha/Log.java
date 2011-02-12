@@ -30,10 +30,9 @@ public class Log {
 
 		try {
 			mLogFile = new FileWriter(new File("log.csv"));
-			mLogFile
-					.append("SystemTime,Simulation Time,Coverage"
-							+ ",Accuracy,Usefulness per Reading,Wasted Readings Total,"
-							+ "Wasted Due To Accuracy, Wasted Due To Coverage, Wasted Due To Both\n");
+			mLogFile.append("SystemTime,Simulation Time,Coverage"
+					+ ",Accuracy,Usefulness per Reading,Wasted Readings Total,"
+					+ "Wasted Due To Coverage, Wasted Due To Accuracy, Wasted Due to Both, Total Number of Readings\n");
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -47,13 +46,10 @@ public class Log {
 			throw new IllegalStateException("Has not been initialized");
 
 		try {
-			int wastedTotal = instance_.mMetricCalc
-					.getUselessReadingsDueToAccuracy()
-					+ instance_.mMetricCalc.getUselessReadingsDueToBoth()
-					+ instance_.mMetricCalc.getUselessReadingsDueToCoverage();
+			
 			MetricCalculator mc = instance_.mMetricCalc;
 
-			
+			int wastedTotal = mc.getPartiallyUselessReadingsTotalCount();
 			final StringBuilder lineBuilder = new StringBuilder(Long
 					.toString(System.currentTimeMillis()));
 			lineBuilder.append(',');
@@ -64,9 +60,10 @@ public class Log {
 			lineBuilder.append(wastedTotal).append(',');
 			lineBuilder.append(mc.getUselessReadingsDueToCoverage())
 					.append(',');
-			lineBuilder.append(mc.getUselessReadingsDueToAccuracy())
-					.append(',');
-			lineBuilder.append(mc.getUselessReadingsDueToBoth()).append('\n');
+			lineBuilder.append(mc.getUselessReadingsDueToAccuracy()).append(',');
+			lineBuilder.append(mc.getUselessReadingsDueToBoth()).append(',');
+			lineBuilder.append(mc.getTotalReadings()).append(
+					'\n');
 
 			instance_.mLogFile.append(lineBuilder.toString());
 

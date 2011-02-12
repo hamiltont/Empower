@@ -15,8 +15,16 @@ public class MetricCalculator {
 	private double mCoverageTotal = 0;
 	private double mCoverageCurrent = 0;
 
+	// Measures the total number of readings
+	private int mTotalReadings = 0;
+
+	// These measure the total accuracy
 	private double mAccuracyMaxDifference = 0;
 	private double mAccuracyCurrentDifference = 0;
+
+	// These measure accuracy within coverage
+	// private double mAccuracyInCoverageMaxDifference = 0;
+	// private double mAccuracyInCoverageCurrentDifference = 0;
 
 	// The following two are used to calculate the number of "useless" reading
 	// inputs. If a pre-reading change plus a post-reading change sum to zero,
@@ -58,7 +66,7 @@ public class MetricCalculator {
 
 	private void setupAccuracy(KmlGeography kml, RealEnvironment real) {
 		mAccuracyMaxDifference = 0;
-		
+
 		// Determine the absolute worst accuracy value that we could have on
 		// this real environment
 		Rectangle geoSize = kml.getPixelSize();
@@ -90,6 +98,8 @@ public class MetricCalculator {
 			mThisIsFirstEnvironment = false;
 		} else {
 			mAccuracyCurrentDifference = 0;
+			// mAccuracyInCoverageMaxDifference = 0;
+			// mAccuracyInCoverageCurrentDifference = 0;
 
 			Rectangle s = kml.getPixelSize();
 			for (int x = s.x; x < s.x + s.width; x++)
@@ -101,8 +111,8 @@ public class MetricCalculator {
 					int realp = ((ImageBackedRealEnvironment) real).getValueAt(
 							x, y);
 
-					mAccuracyCurrentDifference += findChangeInAccuracy(perc,
-							realp);
+					mAccuracyCurrentDifference += findChangeInTotalAccuracy(
+							perc, realp);
 				}
 		}
 
@@ -143,7 +153,7 @@ public class MetricCalculator {
 			// Update accuracy
 			// Because we are about to input a new reading, we subtract the
 			// effect of the current pixels on the accuracy
-			double accuracyOfGivenPixels = findChangeInAccuracy(percPixel,
+			double accuracyOfGivenPixels = findChangeInTotalAccuracy(percPixel,
 					realPixel);
 			mAccuracyCurrentDifference -= accuracyOfGivenPixels;
 			mWasted_lastChangeInAccuracy -= accuracyOfGivenPixels;
@@ -156,7 +166,7 @@ public class MetricCalculator {
 		}
 	}
 
-	private double findChangeInAccuracy(int percPixel, int realPixel) {
+	private double findChangeInTotalAccuracy(int percPixel, int realPixel) {
 		int pRed = (percPixel >> 16) & 0xff;
 		int pGreen = (percPixel >> 8) & 0xff;
 		int pBlue = (percPixel) & 0xff;
@@ -184,8 +194,8 @@ public class MetricCalculator {
 		// pixel e.g. do we have a few readings at that location. Essentially,
 		// the alpha value is used to transition the accuracy metric from the
 		// zone of "we have no knowledge about this area" to a zone of
-		// "we have some knowledge. It may be wildly wrong, but we we do have a number". 
-		
+		// "we have some knowledge. It may be wildly wrong, but we we do have a number".
+
 		// If we don't have any readings, then the current accuracy estimate
 		// assumes the worst for this pixel. Therefore, we have to subtract
 		// the worst. If we trust it completely, then the current accuracy
@@ -213,7 +223,7 @@ public class MetricCalculator {
 
 			// Update accuracy by calculating the effect of the given pixels and
 			// adding that in to the current difference
-			double accuracyOfGivenPixels = findChangeInAccuracy(percPixel,
+			double accuracyOfGivenPixels = findChangeInTotalAccuracy(percPixel,
 					realPixel);
 			mAccuracyCurrentDifference += accuracyOfGivenPixels;
 			mWasted_lastChangeInAccuracy += accuracyOfGivenPixels;
@@ -233,6 +243,7 @@ public class MetricCalculator {
 			mWastedDueToAccuracy++;
 		else if (mWasted_lastChangeInCoverage == 0)
 			mWastedDueToCoverage++;
+		
 
 		// Update our numbers for usefulness, scaling appropriately
 		mUsefulnessTotal += Math.abs(mWasted_lastChangeInAccuracy
@@ -242,33 +253,13 @@ public class MetricCalculator {
 
 		mWasted_lastChangeInAccuracy = 0;
 		mWasted_lastChangeInCoverage = 0;
-	}
 
-	/**
-	 * Allows a network to raise/lower the current accuracy by a given amount.
-	 * Lower current accuracy is better. This method is used for rapid,
-	 * incremental updates of the coverage
-	 * 
-	 * @param amount
-	 */
-	public void changeCurrentAccuracy(double amount) {
-		mAccuracyCurrentDifference += amount;
+		mTotalReadings++;
 	}
 
 	public double getAccuracy() {
 		return (mAccuracyMaxDifference - mAccuracyCurrentDifference)
 				/ mAccuracyMaxDifference;
-	}
-
-	/**
-	 * Allows a network to raise/lower the current coverage by a given amount.
-	 * Higher current coverage is better. This method is used for rapid,
-	 * incremental updates of the coverage
-	 * 
-	 * @param amount
-	 */
-	public void changeCurrentCoverage(double amount) {
-		mCoverageCurrent += amount;
 	}
 
 	/** Returns the current coverage */
@@ -279,31 +270,54 @@ public class MetricCalculator {
 		return mCoverageCurrent / mCoverageTotal;
 	}
 
+	public int getTotalReadings() {
+		return mTotalReadings;
+	}
+
 	/**
 	 * Returns the number of readings that were partially useless because they
-	 * provided no change in coverage. However, these readings <b>did</b>
-	 * provide a change in accuracy, so they were not entirely wasted
+	 * provided no change in coverage. These readings may or may not have had a
+	 * role in changing the current accuracy, and therefore they may have been
+	 * partially useful
 	 */
 	public int getUselessReadingsDueToCoverage() {
-		return mWastedDueToCoverage;
+		return mWastedDueToCoverage + mWastedDueToBoth;
 	}
 
 	/**
 	 * Returns the number of readings that were partially useless because they
-	 * provided no change in accuracy. However, these readings <b>did</b>
-	 * provide a change in coverage, so they were not entirely wasted
+	 * provided no change in accuracy. These readings may or may not have had a
+	 * role in changing the current coverage, and therefore they may have been
+	 * partially useful
 	 */
 	public int getUselessReadingsDueToAccuracy() {
-		return mWastedDueToAccuracy;
+		return mWastedDueToAccuracy + mWastedDueToBoth;
 	}
 
 	/**
-	 * Returns the number of readings that were entirely useless. That is, the
-	 * number of readings that resulted in absolutely no change in either
-	 * coverage or accuracy.
+	 * Returns the total count of readings that were partially useless. Note
+	 * that this is not the same as the sum of
+	 * {@link MetricCalculator#getUselessReadingsDueToAccuracy()} and
+	 * {@link MetricCalculator#getUselessReadingsDueToCoverage()}, because some
+	 * of the readings may have been useless to both coverage and accuracy and
+	 * therefore been double counted
+	 * 
+	 * @return
 	 */
+	public int getPartiallyUselessReadingsTotalCount() {
+		return getUselessReadingsDueToAccuracy()
+				+ getUselessReadingsDueToCoverage()
+				- getUselessReadingsDueToBoth();
+	}
+
 	public int getUselessReadingsDueToBoth() {
 		return mWastedDueToBoth;
+	}
+
+	public void resetUselessReadingCounts() {
+		mWastedDueToAccuracy = 0;
+		mWastedDueToCoverage = 0;
+		mWastedDueToBoth = 0;
 	}
 
 	/**
@@ -316,9 +330,12 @@ public class MetricCalculator {
 		return mUsefulnessTotal / (double) mUsefulnessCount;
 	}
 
-	public void resetUsefulnessPerReading() {
+	/*public void resetUsefulnessPerReading() {
 		mUsefulnessCount = 0;
 		mUsefulnessTotal = 0;
-	}
+	}*/
 
+	public void resetTotalReadingCount() {
+		mTotalReadings = 0;
+	}
 }

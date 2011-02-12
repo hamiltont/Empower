@@ -16,6 +16,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.UIManager;
 
 public class Launcher {
 
@@ -121,7 +122,8 @@ public class Launcher {
 
 			double probabilityOfMoving = 1d;
 			try {
-				probabilityOfMoving = Double.parseDouble(mMoveTendenancy.getText());
+				probabilityOfMoving = Double.parseDouble(mMoveTendenancy
+						.getText());
 			} catch (NumberFormatException a) {
 			}
 
@@ -140,8 +142,8 @@ public class Launcher {
 			} catch (NumberFormatException a) {
 			}
 
-			new Main(geoFile, nwFile, probabilityOfMoving, mobility, timePerHB, inputFreq,
-					true);
+			new Main(geoFile, nwFile, probabilityOfMoving, mobility, timePerHB,
+					inputFreq, true);
 		}
 	};
 }

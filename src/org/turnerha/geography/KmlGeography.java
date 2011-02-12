@@ -73,11 +73,10 @@ public class KmlGeography {
 		}
 	}
 
-	public void paint(Graphics g) {
-		g.setColor(Color.black);
-		g.fillRect(0, 0, mPixelWidth, mPixelHeight);
+	private Color seeThruBlack = new Color(0, 0, 0, 50);
 
-		g.setColor(Color.DARK_GRAY);
+	public void paint(Graphics g) {
+		g.setColor(seeThruBlack);
 
 		for (MyPolygon poly : mPolys) {
 			for (int i = 0; i < poly.mPoints.size() - 1; i++) {

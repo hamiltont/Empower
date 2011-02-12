@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.turnerha.environment.Environment;
+import org.turnerha.environment.MetricCalculator;
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
-import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 import org.turnerha.geography.KmlGeography;
 
 @SuppressWarnings( { "serial" })
@@ -24,14 +24,13 @@ class ModelView extends Component {
 
 	private KmlGeography mMap;
 	private Environment mNetwork;
-	private ImageBackedRealEnvironment mRealEnviron;
+	private MetricCalculator mMetric;
 
 	public ModelView(ModelProxy proxy, ModelController cont, KmlGeography m,
-			Environment rn,
-			ImageBackedRealEnvironment imageBackedRealEnvironment) {
+			Environment rn, MetricCalculator mc) {
 		this.proxy = proxy;
 		controller_ = cont;
-		mRealEnviron = imageBackedRealEnvironment;
+		mMetric = mc;
 
 		mMap = m;
 		mNetwork = rn;
@@ -64,11 +63,11 @@ class ModelView extends Component {
 	public void paint(Graphics g) {
 		long start = System.nanoTime();
 		calculateFrameRate();
+		
+		g.setColor(Color.GRAY);
+		g.fillRect(0, 0, getWidth(), getHeight());
 
-		mMap.paint(g);
-
-		// Set Alpha. 0.0f is 100% transparent and 1.0f is 100% opaque.
-		g.setColor(mStaticPoint);
+		/*g.setColor(mStaticPoint);
 
 		proxy.modelLock.lock();
 		try {
@@ -89,56 +88,48 @@ class ModelView extends Component {
 
 				}
 
-			g.setColor(Color.white);
-			
-			g.drawString("Heartbeats: " + controller_.getHeartbeatCount(), 10, 40);
-
-			// if (proxy.getFrameCount() == 200)
-			// mRealEnviron.loadNewEnvironment("foo");
-
-			//String days = String.format("%1$5.3f", timeInDays);
-			//g.drawString("Simulation Time (days):" + days, 10, 55);
-			g.drawString("Slowdown Factor: " + controller_.sleepTime.get()
-					+ " (Press + or - to change)", 10, 70);
-
 		} finally {
 			proxy.modelLock.unlock();
-		}
+		}*/
 
 		mNetwork.paintInto(g, null);
+		
+		mMap.paint(g);
 
 		if (frameCount == FRAMES) {
 			long timeInMilliSec = totalTime / 1000000;
 			double framesInMilliSeconds = (double) FRAMES
 					/ (double) timeInMilliSec;
 			fps = framesInMilliSeconds * 1000;
-
-			// fps = (FRAMES / totalTime) * 1000000000;
 			totalTime = 0;
 			frameCount = 0;
 		} else {
 			totalTime += System.nanoTime() - start;
 			frameCount++;
 		}
-		String f2 = String.format("%1$5.3f", fps);
 
 		g.setColor(Color.white);
-		String f1 = String.format("%1$5.3f", framesPerSecond_);
-		g.drawString("Framerate (inclusive): " + f1, 10, 10);
-		g.drawString("Framerate (exclusive): " + f2, 10, 25);
-
-		g.drawString("Coverage: xx%", 10, 85);
-		g.drawString("Accuracy within coverage: xx%", 10, 100);
-		g.drawString("Accuracy total: xx%", 10, 115);
+		
+		int multiplier = 15;
+		int base = 15;
+		
+		g.drawString("Framerate: " + String.format("%1$5.2f", framesPerSecond_), 10, multiplier * 0 + base);
+		g.drawString("Heartbeats: " + controller_.getHeartbeatCount(), 10, multiplier * 1 + base);
+		g.drawString("Slowdown Factor: " + controller_.sleepTime.get(), 10, multiplier * 2 + base);
+		
+		g.drawString("Coverage: " + String.format("%1$5.2f", mMetric.getCoverage()), 10, multiplier * 4 + base);
+		g.drawString("Total Accuracy: " + String.format("%1$5.2f", mMetric.getAccuracy()), 10, multiplier * 5 + base);
+		
+		//g.drawString("Accuracy within coverage: xx%", 10, 100);
 
 		if (mNetwork instanceof ImageBackedPerceivedEnvironment)
 			g.drawString("Viewing Perceived Environment (Press R to change)",
-					10, 130);
+					10, multiplier * 6 + base);
 		else
 			g.drawString("Viewing Perceived Environment (Press P to change)",
-					10, 130);
+					10, multiplier * 6 + base);
 
-		g.drawString("Press (esc) to quit", 10, 145);
+		g.drawString("Press (esc) to quit", 10, multiplier * 7 + base);
 	}
 
 	public void setDisplayNetwork(Environment n) {

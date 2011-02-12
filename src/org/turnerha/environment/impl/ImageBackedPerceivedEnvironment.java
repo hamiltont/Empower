@@ -11,17 +11,12 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Transparency;
 import java.awt.image.BufferedImage;
-import java.awt.image.RescaleOp;
 import java.util.HashMap;
 
-import javax.swing.JFrame;
-
-import org.turnerha.Main;
 import org.turnerha.environment.MetricCalculator;
 import org.turnerha.environment.PerceivedEnvironment;
 import org.turnerha.environment.utils.BlendComposite;
 import org.turnerha.environment.utils.EnvironUtils;
-import org.turnerha.environment.utils.ImagePanel;
 import org.turnerha.geography.GeoBox;
 import org.turnerha.geography.GeoLocation;
 import org.turnerha.geography.KmlGeography;
@@ -41,17 +36,11 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	 */
 	private int mReadings = 0;
 
-	/** Used to make the network image paint at 50% opacity */
-	private RescaleOp mAlphaOp;
-
 	/**
 	 * The projection between the pixel values in the backing image model data
 	 * and real-world latitude longitude
 	 */
 	private ProjectionCartesian mProjection;
-
-	private JFrame mDebugFrame;
-	private ImagePanel mDebugImagePanel;
 
 	private MetricCalculator mMetricCalc;
 
@@ -61,21 +50,8 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 		mProjection = new ProjectionCartesian(kml.getGeoBox(), size);
 		mMetricCalc = mc;
 
+		// Setup Perceived Network Image
 		mNetwork = createCompatibleTranslucentImage(size.width, size.height);
-
-		// Create a rescale filter operation to makes the image 50% opaque
-		float[] scales = { 1f, 1f, 1f, 0.5f };
-		float[] offsets = new float[4];
-		mAlphaOp = new RescaleOp(scales, offsets, null);
-
-		if (Main.DEBUG) {
-			mDebugFrame = new JFrame("Perceived black/white");
-			mDebugImagePanel = new ImagePanel(mNetwork);
-			mDebugFrame.getContentPane().add(mDebugImagePanel);
-			mDebugFrame.setSize(800, 500);
-			mDebugFrame.setVisible(true);
-		}
-
 	}
 
 	@Override
@@ -108,18 +84,11 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 
 		// Let the metric calculator add back in the effect due to p
 		mMetricCalc.postNewReading(affectedPoints);
-
-		if (Main.DEBUG) {
-			mDebugImagePanel.setImage(mNetwork);
-		}
 	}
 
 	@Override
-	public void paintInto(Graphics g, Projection proj) {
-		// Draw the image, applying an alpha filter
-		Graphics2D g2d = (Graphics2D) g;
-		g2d.drawImage(mNetwork, mAlphaOp, 0, 0);
-
+	public void paintInto(Graphics g, Projection proj) {		
+		g.drawImage(mNetwork, 0, 0, null);
 	}
 
 	public static BufferedImage createCompatibleTranslucentImage(int width,

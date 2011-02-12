@@ -2,7 +2,6 @@ package org.turnerha.environment.impl;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -13,7 +12,6 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import org.turnerha.environment.RealEnvironment;
-import org.turnerha.environment.utils.Loader;
 import org.turnerha.geography.GeoBox;
 import org.turnerha.geography.GeoLocation;
 import org.turnerha.geography.KmlGeography;
@@ -28,9 +26,6 @@ public class ImageBackedRealEnvironment implements RealEnvironment {
 
 	/** The desired pixel size of the real environment */
 	private Dimension mSize;
-
-	/** Contains a 1x256 image that specifies the valid 265 colors */
-	private BufferedImage mColorScheme;
 
 	/** Contains the KML data of the geographic location we are simulating */
 	private KmlGeography mKmlGeography;
@@ -51,8 +46,7 @@ public class ImageBackedRealEnvironment implements RealEnvironment {
 	 *            the realEnviron will be matched to this color scheme as best
 	 *            as possible
 	 */
-	public ImageBackedRealEnvironment(File realEnvironmentFile, Dimension size,
-			BufferedImage colorScheme, float alpha, KmlGeography kmlGeography) {
+	public ImageBackedRealEnvironment(File realEnvironmentFile, Dimension size, float alpha, KmlGeography kmlGeography) {
 
 		mSize = size;
 
@@ -65,16 +59,9 @@ public class ImageBackedRealEnvironment implements RealEnvironment {
 			scales[3] = alpha;
 		mRealpha = new RescaleOp(scales, offsets, null);
 
-		mColorScheme = colorScheme;
-
 		mKmlGeography = kmlGeography;
 
 		loadNewEnvironment(realEnvironmentFile);
-	}
-
-	public void loadNewEnvironment(String filename) {
-		File f = new File("network-images/network3.png");
-		loadNewEnvironment(f);
 	}
 
 	public void loadNewEnvironment(File realNetworkFile) {
@@ -84,15 +71,11 @@ public class ImageBackedRealEnvironment implements RealEnvironment {
 
 			// Scale the image
 			mRealEnviron = new BufferedImage(mSize.width, mSize.height,
-					BufferedImage.TYPE_INT_RGB);
+					BufferedImage.TYPE_INT_ARGB);
 			Graphics g = mRealEnviron.getGraphics();
 			g.drawImage(temp, 0, 0, mSize.width, mSize.height, 0, 0, temp
 					.getWidth(), temp.getHeight(), null);
 			g.dispose();
-
-			// Convert the color scheme
-			mRealEnviron = Loader
-					.convertColorScheme(mRealEnviron, mColorScheme);
 
 			// Clear any pixels not contained within the defined geo
 			removePixelsNotInGeography(mRealEnviron, mKmlGeography);
@@ -116,10 +99,7 @@ public class ImageBackedRealEnvironment implements RealEnvironment {
 
 	@Override
 	public void paintInto(Graphics g, Projection proj) {
-		Graphics2D g2d = (Graphics2D) g;
-
-		/* Draw the image, applying the alpha filter */
-		g2d.drawImage(mRealEnviron, mRealpha, 0, 0);
+		g.drawImage(mRealEnviron, 0, 0, null);
 	}
 
 	@Override
