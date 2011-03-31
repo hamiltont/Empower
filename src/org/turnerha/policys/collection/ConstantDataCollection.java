@@ -1,11 +1,11 @@
 package org.turnerha.policys.collection;
 
-import org.turnerha.SmartPhone;
+import org.turnerha.sensornodes.SensorNode;
 
 public class ConstantDataCollection implements DataCollectionPolicy {
 
 	@Override
-	public boolean shouldCollectData(SmartPhone phone) {
+	public boolean shouldCollectData(SensorNode node) {
 		return true;
 	}
 

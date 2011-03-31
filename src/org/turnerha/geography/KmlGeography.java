@@ -10,7 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Allows a kml-based geography file to be painted to the screen
+ * Allows a kml-based geography file to be painted to the screen. There should
+ * only be one of these per run of the simulation, so I am making it a singleton
  * 
  * @author hamiltont
  * 
@@ -19,26 +20,45 @@ public class KmlGeography {
 
 	private List<MyPolygon> mPolys;
 
-	private static GeoLocation topRight = new GeoLocation(39.520992, -74.421386);
-	private static GeoLocation botLeft = new GeoLocation(36.509636, -83.913574);
+	private GeoLocation topRight = new GeoLocation(39.520992, -74.421386);
+	private GeoLocation botLeft = new GeoLocation(36.509636, -83.913574);
 
-	private static double latDifference = topRight.lat - botLeft.lat;
-	private static double lonDifference = botLeft.lon - topRight.lon;
+	private double latDifference = topRight.lat - botLeft.lat;
+	private double lonDifference = botLeft.lon - topRight.lon;
 
-	private static int mPixelWidth = 1400;
-	private static int mPixelHeight = 850;
+	private int mPixelWidth = 1400;
+	private int mPixelHeight = 850;
 
-	public KmlGeography(List<MyPolygon> polys, Dimension screen,
+	private static KmlGeography instance_ = null;
+
+	public static KmlGeography getInstance() {
+		if (instance_ == null)
+			throw new IllegalStateException("Init has not been called");
+		return instance_;
+	}
+
+	private KmlGeography() {
+	}
+
+	public static KmlGeography init(List<MyPolygon> polys, Dimension screen,
 			GeoLocation tr, GeoLocation bl) {
-		topRight = tr;
-		botLeft = bl;
-		latDifference = topRight.lat - botLeft.lat;
-		lonDifference = botLeft.lon - topRight.lon;
 
-		mPixelWidth = screen.width;
-		mPixelHeight = screen.height;
+		if (instance_ != null)
+			throw new IllegalStateException("Init has already been called");
 
-		mPolys = polys;
+		instance_ = new KmlGeography();
+
+		instance_.topRight = tr;
+		instance_.botLeft = bl;
+		instance_.latDifference = instance_.topRight.lat
+				- instance_.botLeft.lat;
+		instance_.lonDifference = instance_.botLeft.lon
+				- instance_.topRight.lon;
+
+		instance_.mPixelWidth = screen.width;
+		instance_.mPixelHeight = screen.height;
+
+		instance_.mPolys = polys;
 
 		for (MyPolygon poly : polys) {
 			poly.mPoints = new ArrayList<Point>(poly.mLocations.size());
@@ -49,16 +69,18 @@ public class KmlGeography {
 			for (GeoLocation dp : poly.mLocations) {
 
 				// Remove the base, and then multiple by pixels per latitude
-				double yFloat = (dp.lat - botLeft.lat)
-						* (double) (mPixelHeight) / latDifference;
+				double yFloat = (dp.lat - instance_.botLeft.lat)
+						* (double) (instance_.mPixelHeight)
+						/ instance_.latDifference;
 
 				int y = (int) Math.round(yFloat);
 				// Flip to align coordinate systems
-				y = mPixelHeight - y;
+				y = instance_.mPixelHeight - y;
 
 				// Remove the base, and then multiple by pixels per latitude
-				double xFloat = (dp.lon - botLeft.lon) * (double) (mPixelWidth)
-						/ lonDifference;
+				double xFloat = (dp.lon - instance_.botLeft.lon)
+						* (double) (instance_.mPixelWidth)
+						/ instance_.lonDifference;
 
 				int x = -1 * (int) Math.round(xFloat);
 
@@ -71,6 +93,7 @@ public class KmlGeography {
 			}
 			poly.mPoly = new Polygon(xArray, yArray, xArray.length);
 		}
+		return instance_;
 	}
 
 	private Color seeThruBlack = new Color(0, 0, 0, 50);

@@ -13,6 +13,7 @@ import java.awt.Transparency;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 
+import org.turnerha.Util;
 import org.turnerha.environment.MetricCalculator;
 import org.turnerha.environment.PerceivedEnvironment;
 import org.turnerha.environment.utils.BlendComposite;
@@ -23,8 +24,6 @@ import org.turnerha.geography.KmlGeography;
 import org.turnerha.geography.Projection;
 import org.turnerha.geography.ProjectionCartesian;
 
-// TODO - Hide the Perceived network behind a server object. The server object can then
-// monitor the 'bandwidth' consumed
 public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	BufferedImage mNetwork;
 
@@ -44,10 +43,11 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 
 	private MetricCalculator mMetricCalc;
 
-	public ImageBackedPerceivedEnvironment(Dimension size, KmlGeography kml,
-			MetricCalculator mc) {
+	public ImageBackedPerceivedEnvironment(MetricCalculator mc) {
+		Dimension size = Util.getRenderingAreaSize();
 
-		mProjection = new ProjectionCartesian(kml.getGeoBox(), size);
+		mProjection = new ProjectionCartesian(KmlGeography.getInstance()
+				.getGeoBox(), size);
 		mMetricCalc = mc;
 
 		// Setup Perceived Network Image
@@ -87,7 +87,7 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	}
 
 	@Override
-	public void paintInto(Graphics g, Projection proj) {		
+	public void paintInto(Graphics g, Projection proj) {
 		g.drawImage(mNetwork, 0, 0, null);
 	}
 

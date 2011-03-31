@@ -45,6 +45,16 @@ public class MetricCalculator {
 	private boolean mThisIsFirstEnvironment = true;
 
 	public MetricCalculator() {
+
+		KmlGeography geo = KmlGeography.getInstance();
+		
+		// Determine the total possible coverage
+		Rectangle geoSize = geo.getPixelSize();
+		for (int x = geoSize.x; x < (geoSize.width + geoSize.x); x++)
+			for (int y = geoSize.y; y < (geoSize.height + geoSize.y); y++)
+				if (geo.contains(x, y))
+					mCoverageTotal++;
+
 	}
 
 	/** Used to inject a new real environment */
@@ -116,15 +126,6 @@ public class MetricCalculator {
 				}
 		}
 
-	}
-
-	public void setupCoverage(KmlGeography geo) {
-		// Determine the total possible coverage
-		Rectangle geoSize = geo.getPixelSize();
-		for (int x = geoSize.x; x < (geoSize.width + geoSize.x); x++)
-			for (int y = geoSize.y; y < (geoSize.height + geoSize.y); y++)
-				if (geo.contains(x, y))
-					mCoverageTotal++;
 	}
 
 	/**

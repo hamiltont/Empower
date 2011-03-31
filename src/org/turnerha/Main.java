@@ -1,11 +1,9 @@
 package org.turnerha;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
-import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -14,10 +12,8 @@ import java.util.HashMap;
 import java.util.Random;
 
 import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 
-import org.turnerha.environment.MetricCalculator;
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
 import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 import org.turnerha.geography.KmlGeography;
@@ -26,122 +22,112 @@ import org.turnerha.geography.Projection;
 import org.turnerha.geography.ProjectionCartesian;
 import org.turnerha.policys.collection.ConstantDataCollection;
 import org.turnerha.policys.collection.DataCollectionPolicy;
+import org.turnerha.policys.movement.NodeMovementPolicy;
+import org.turnerha.policys.movement.ProbabilisticMovementPolicy;
+import org.turnerha.sensornodes.SensorNode;
+import org.turnerha.sensornodes.SmartPhone;
+import org.turnerha.server.Server;
 
 public class Main {
 
 	public static int hoursPerHeartbeat = 1;
 	public static int rows = 1; // Do not change this unless you are sure
 	public static int columns = 1; // you can share Smart-phones between models
-	public static int phonesPerSlice = 1000;
+	private int mPhoneCount = 1;
 	public static boolean DEBUG = false;
 
 	ModelView mModelView;
 	ImageBackedRealEnvironment mRealNetwork;
-	ImageBackedPerceivedEnvironment mPerceivedNetwork;
-
+	Server mServer;
 
 	public Main(File geoFileNameKml, File networkFileName,
 			double probabilityOfMoving, int mobilityInMeters,
 			int timePerHeartbeat, float inputFrequency, boolean usingGPS) {
-		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-		screen.height -= 20;
+		Dimension screen = Util.getRenderingAreaSize();
 
 		hoursPerHeartbeat = timePerHeartbeat;
 
 		Random r = new Random();
 
-		// Read in KML and create map - it has no dependencies
+		// Read in KML file, and create the KmlGeography
 		KmlReader reader = new KmlReader(geoFileNameKml);
 		Dimension foo = new Dimension(screen);
-		foo.height -= 25;
-		KmlGeography kmlGeography = new KmlGeography(reader.getPoly(), foo,
+		foo.height -= 25; // TODO figure out why I need this??
+		KmlGeography kmlGeography = KmlGeography.init(reader.getPoly(), foo,
 				reader.mTopRight, reader.mBottomLeft);
 
-		// Create the metric calc
-		MetricCalculator mc = new MetricCalculator();
-		mc.setupCoverage(kmlGeography);
-
-		new Log(mc);
+		// Create the server, which internally creates the PerceivedEnvironment
+		// and the MetricCalculator
+		mServer = new Server();
+		new Log(mServer.getMetricCalculator());
 
 		// Create real network
 		ImageBackedRealEnvironment rn = new ImageBackedRealEnvironment(
 				networkFileName, screen, 0.5f, kmlGeography);
 		mRealNetwork = rn;
-		mc.updateRealEnvironment(mRealNetwork);
-
-		// Create perceived Environment
-		ImageBackedPerceivedEnvironment pn = new ImageBackedPerceivedEnvironment(
-				screen, kmlGeography, mc);
-		mPerceivedNetwork = pn;
-		mc.updatePerceivedEnvironment(mPerceivedNetwork);
-
-		// calculateAccuracy(rn, pn, kmlGeography);
-
-		// Create ModelFrontBuffer
-		ModelProxy proxy = new ModelProxy(rows, columns);
+		mServer.getMetricCalculator().updateRealEnvironment(mRealNetwork);
 
 		// Create a random hashset of real environments to try
 		HashMap<Integer, File> mEnvironmentalMap = new HashMap<Integer, File>(2);
-		//for (int i = 0; i < 9; i++) {
-		//	mEnvironmentalMap.put(new Integer( (i+1) * 200), new File(
-		//			"network-images/dynamic-network-images/" + i + ".png"));
-		//}
-		//mEnvironmentalMap.put(new Integer(500), new File("network-images/horizontal-gradient.png"));
-		
-		//mEnvironmentalMap.put(new Integer(8000), new File("network-images/network3.png"));
-		
-		ModelController controller = new ModelController(proxy, rows, columns,
-				mc, mEnvironmentalMap, rn);
+		// for (int i = 0; i < 9; i++) {
+		// mEnvironmentalMap.put(new Integer( (i+1) * 200), new File(
+		// "network-images/dynamic-network-images/" + i + ".png"));
+		// }
+		mEnvironmentalMap.put(new Integer(1500), new File(
+				"network-images/horizontal-gradient.png"));
+		// mEnvironmentalMap.put(new Integer(8000), new
+		// File("network-images/network3.png"));
 
 		Projection rando = new ProjectionCartesian(kmlGeography.getGeoBox(),
 				screen);
 
 		// Build Slices
-		//DataCollectionPolicy policy = new MobilityBasedDataCollection(r);
+		// DataCollectionPolicy policy = new MobilityBasedDataCollection(r);
 		DataCollectionPolicy policy = new ConstantDataCollection();
-		Slice[][] slices = new Slice[rows][columns];
-		Random probOfMoving = new Random(r.nextLong());
-		for (int row : Util.range(rows))
-			for (int col : Util.range(columns)) {
-				ArrayList<SmartPhone> slicePhones = new ArrayList<SmartPhone>();
+		//NodeMovementPolicy mPolicy = StaticNodeMovementPolicy.getInstance();
+		NodeMovementPolicy mPolicy = new ProbabilisticMovementPolicy(0.5, r);
 
-				for (@SuppressWarnings("unused") int o : Util.range(phonesPerSlice)) {
-					int x, y;
-					do {
-						x = r.nextInt(screen.width);
-						y = r.nextInt(screen.height);
-					} while (false == kmlGeography.contains(x, y));
+		Random generator = new Random();
+		ArrayList<SensorNode> nodes = new ArrayList<SensorNode>(mPhoneCount);
 
-					slicePhones.add(new SmartPhone(new Point(x, y), reader
-							.getPoly(), pn, rn, probOfMoving.nextDouble(),
-							inputFrequency, rando, policy, r));
-				}
+		for (@SuppressWarnings("unused")
+		int o : Util.range(mPhoneCount)) {
+			int x, y;
+			do {
+				x = r.nextInt(screen.width);
+				y = r.nextInt(screen.height);
+			} while (false == kmlGeography.contains(x, y));
 
-				Slice s = new Slice(slicePhones, controller, row, col);
-				s.start();
-			}
+			nodes.add(new SmartPhone(new Point(x, y), reader.getPoly(),
+					mServer, rn, rando, policy, mPolicy, generator));
+		}
 
-		// Add Slices to front buffer for first read
-		proxy.swapModel(slices);
+		// Build the model from the sensor nodes
+		Model model = new Model(nodes);
+
+		ModelController controller = new ModelController(mServer
+				.getMetricCalculator(), mEnvironmentalMap, rn, model);
 
 		// Add the overall keyboard listener
 		KeyboardFocusManager.getCurrentKeyboardFocusManager()
 				.addKeyEventDispatcher(new MyKeyListener(controller));
-		
+
 		// Setup the UI and start the display
 		JFrame frame = new JFrame();
 		frame.setSize(screen);
 		frame.setLayout(null);
 		frame.setTitle("Empower");
 
-		ModelView view = new ModelView(proxy, controller, kmlGeography, pn, mc);
+		ModelView view = new ModelView(controller, kmlGeography, mRealNetwork,
+				mServer.getMetricCalculator(), model, rando);
 		mModelView = view;
 		view.setBounds(0, 0, screen.width, screen.height);
-		frame.getRootPane().setBorder(BorderFactory.createLineBorder(Color.BLACK, 4));
 
 		frame.add(view);
 		frame.validate();
 		frame.setVisible(true);
+
+		controller.start(view);
 	}
 
 	private class MyKeyListener implements KeyEventDispatcher {
@@ -174,7 +160,7 @@ public class Main {
 
 			case KeyEvent.VK_P:
 				// Means switch to perceived network
-				mModelView.setDisplayNetwork(mPerceivedNetwork);
+				mModelView.setDisplayNetwork(mServer.getPerceivedEnvironment());
 				return true;
 
 			case KeyEvent.VK_R:
@@ -194,7 +180,9 @@ public class Main {
 				return true;
 
 			case KeyEvent.VK_O:
-				writeOut(mRealNetwork, mPerceivedNetwork);
+				writeOut(mRealNetwork,
+						(ImageBackedPerceivedEnvironment) mServer
+								.getPerceivedEnvironment());
 				return true;
 
 			}
