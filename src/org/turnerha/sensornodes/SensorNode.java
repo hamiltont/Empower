@@ -2,6 +2,7 @@ package org.turnerha.sensornodes;
 
 import java.awt.Point;
 
+import org.turnerha.geography.GeoBox;
 import org.turnerha.geography.GeoLocation;
 import org.turnerha.geography.Projection;
 import org.turnerha.policys.collection.DataCollectionPolicy;
@@ -13,6 +14,12 @@ public interface SensorNode {
 	 * @return The location that this sensor node is currently at
 	 */
 	public GeoLocation getLocation();
+
+	/**
+	 * @return A {@link GeoBox} that defines the possible locations this
+	 *         {@link SensorNode} could be reporting data from
+	 */
+	public GeoBox getLocationBoundingBox();
 
 	/**
 	 * @param p

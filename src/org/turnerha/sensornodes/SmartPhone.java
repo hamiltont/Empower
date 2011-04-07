@@ -6,6 +6,7 @@ import java.util.Random;
 
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
 import org.turnerha.environment.impl.ImageBackedRealEnvironment;
+import org.turnerha.geography.GeoBox;
 import org.turnerha.geography.GeoLocation;
 import org.turnerha.geography.MyPolygon;
 import org.turnerha.geography.Projection;
@@ -127,5 +128,10 @@ public class SmartPhone implements SensorNode {
 	@Override
 	public Point getPointUsing(Projection p) {
 		return p.getPointAt(mLocation);
+	}
+
+	@Override
+	public GeoBox getLocationBoundingBox() {
+		return new GeoBox(mLocation, mLocation);
 	}
 }
