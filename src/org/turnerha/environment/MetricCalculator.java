@@ -3,6 +3,8 @@ package org.turnerha.environment;
 import java.awt.Point;
 import java.awt.Rectangle;
 
+import org.turnerha.Log;
+import org.turnerha.Model;
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
 import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 import org.turnerha.geography.KmlGeography;
@@ -45,9 +47,8 @@ public class MetricCalculator {
 	private boolean mThisIsFirstEnvironment = true;
 
 	public MetricCalculator() {
+		KmlGeography geo = Model.getInstance().getKml();
 
-		KmlGeography geo = KmlGeography.getInstance();
-		
 		// Determine the total possible coverage
 		Rectangle geoSize = geo.getPixelSize();
 		for (int x = geoSize.x; x < (geoSize.width + geoSize.x); x++)
@@ -55,6 +56,7 @@ public class MetricCalculator {
 				if (geo.contains(x, y))
 					mCoverageTotal++;
 
+		new Log(this);
 	}
 
 	/** Used to inject a new real environment */
@@ -244,7 +246,6 @@ public class MetricCalculator {
 			mWastedDueToAccuracy++;
 		else if (mWasted_lastChangeInCoverage == 0)
 			mWastedDueToCoverage++;
-		
 
 		// Update our numbers for usefulness, scaling appropriately
 		mUsefulnessTotal += Math.abs(mWasted_lastChangeInAccuracy
@@ -331,10 +332,10 @@ public class MetricCalculator {
 		return mUsefulnessTotal / (double) mUsefulnessCount;
 	}
 
-	/*public void resetUsefulnessPerReading() {
-		mUsefulnessCount = 0;
-		mUsefulnessTotal = 0;
-	}*/
+	/*
+	 * public void resetUsefulnessPerReading() { mUsefulnessCount = 0;
+	 * mUsefulnessTotal = 0; }
+	 */
 
 	public void resetTotalReadingCount() {
 		mTotalReadings = 0;

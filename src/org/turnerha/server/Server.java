@@ -28,6 +28,8 @@ public class Server {
 	}
 	
 	public MetricCalculator getMetricCalculator() {
+		if (mMetricCalculator == null)
+			mMetricCalculator = new MetricCalculator();
 		return mMetricCalculator;
 	}
 

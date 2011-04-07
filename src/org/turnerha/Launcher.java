@@ -141,8 +141,8 @@ public class Launcher {
 			} catch (NumberFormatException a) {
 			}
 
-			new Main(geoFile, nwFile, probabilityOfMoving, mobility, timePerHB,
-					inputFreq, true);
+			//new Main(geoFile, nwFile, probabilityOfMoving, mobility, timePerHB,
+			//		inputFreq, true);
 		}
 	};
 }

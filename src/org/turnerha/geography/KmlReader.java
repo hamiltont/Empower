@@ -23,8 +23,15 @@ public class KmlReader {
 	public List<MyPolygon> getPoly() {
 		return mPoly;
 	}
+	
+	public KmlReader() {}
 
-	public KmlReader(File inputFile) {
+	/**
+	 * 
+	 * @param inputFile
+	 * @return true if the file was read and parsed properly, false otherwise
+	 */
+	public boolean read(File inputFile) {
 		KMLParser parser = new KMLParser();
 		Configuration.properties.setProperty(Configuration.GENERATE_IDS,
 				Configuration.OFF);
@@ -82,8 +89,10 @@ public class KmlReader {
 			
 		} catch (IOException e) {
 			e.printStackTrace();
+			return false;
 		} catch (SAXException e) {
 			e.printStackTrace();
+			return false;
 		}
 		
 		double margin = .5d;
@@ -98,5 +107,7 @@ public class KmlReader {
 		
 		mTopRight = topRight;
 		mBottomLeft = bottomLeft;
+		
+		return true;
 	}
 }

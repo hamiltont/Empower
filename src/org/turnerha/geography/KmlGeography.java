@@ -9,6 +9,8 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.turnerha.ModelView;
+
 /**
  * Allows a kml-based geography file to be painted to the screen. There should
  * only be one of these per run of the simulation, so I am making it a singleton
@@ -16,6 +18,8 @@ import java.util.List;
  * @author hamiltont
  * 
  */
+
+// TODO Add an applyProjection(Projection p) method
 public class KmlGeography {
 
 	private List<MyPolygon> mPolys;
@@ -29,36 +33,33 @@ public class KmlGeography {
 	private int mPixelWidth = 1400;
 	private int mPixelHeight = 850;
 
-	private static KmlGeography instance_ = null;
-
-	public static KmlGeography getInstance() {
-		if (instance_ == null)
-			throw new IllegalStateException("Init has not been called");
-		return instance_;
+	public KmlGeography() {
 	}
 
-	private KmlGeography() {
-	}
+	/**
+	 * 
+	 * @param polys
+	 * @param screen
+	 * @param tr
+	 * @param bl
+	 */
+	public void init(List<MyPolygon> polys, GeoLocation tr, GeoLocation bl) {
 
-	public static KmlGeography init(List<MyPolygon> polys, Dimension screen,
-			GeoLocation tr, GeoLocation bl) {
+		topRight = tr;
+		botLeft = bl;
+		latDifference = topRight.lat - botLeft.lat;
+		lonDifference = botLeft.lon - topRight.lon;
 
-		if (instance_ != null)
-			throw new IllegalStateException("Init has already been called");
+		Dimension screen = ModelView.getInstance().getRenderingArea();
+		if (screen.width == 0 || screen.height == 0)
+			throw new IllegalStateException(
+					"ModelView.getInstance is not implemented, "
+							+ "or getRenderingArea is being called before it should");
 
-		instance_ = new KmlGeography();
+		mPixelWidth = screen.width;
+		mPixelHeight = screen.height;
 
-		instance_.topRight = tr;
-		instance_.botLeft = bl;
-		instance_.latDifference = instance_.topRight.lat
-				- instance_.botLeft.lat;
-		instance_.lonDifference = instance_.botLeft.lon
-				- instance_.topRight.lon;
-
-		instance_.mPixelWidth = screen.width;
-		instance_.mPixelHeight = screen.height;
-
-		instance_.mPolys = polys;
+		mPolys = polys;
 
 		for (MyPolygon poly : polys) {
 			poly.mPoints = new ArrayList<Point>(poly.mLocations.size());
@@ -69,18 +70,16 @@ public class KmlGeography {
 			for (GeoLocation dp : poly.mLocations) {
 
 				// Remove the base, and then multiple by pixels per latitude
-				double yFloat = (dp.lat - instance_.botLeft.lat)
-						* (double) (instance_.mPixelHeight)
-						/ instance_.latDifference;
+				double yFloat = (dp.lat - botLeft.lat)
+						* (double) (mPixelHeight) / latDifference;
 
 				int y = (int) Math.round(yFloat);
 				// Flip to align coordinate systems
-				y = instance_.mPixelHeight - y;
+				y = mPixelHeight - y;
 
 				// Remove the base, and then multiple by pixels per latitude
-				double xFloat = (dp.lon - instance_.botLeft.lon)
-						* (double) (instance_.mPixelWidth)
-						/ instance_.lonDifference;
+				double xFloat = (dp.lon - botLeft.lon) * (double) (mPixelWidth)
+						/ lonDifference;
 
 				int x = -1 * (int) Math.round(xFloat);
 
@@ -93,19 +92,24 @@ public class KmlGeography {
 			}
 			poly.mPoly = new Polygon(xArray, yArray, xArray.length);
 		}
-		return instance_;
 	}
 
 	private Color seeThruBlack = new Color(0, 0, 0, 50);
 
-	public void paint(Graphics g) {
+	public void paint(Graphics g, Projection p) {
 		g.setColor(seeThruBlack);
 
+		// TODO holy mother of dear god optimize this
+		Projection mainP = ModelView.getInstance().getDefaultProjection();
 		for (MyPolygon poly : mPolys) {
 			for (int i = 0; i < poly.mPoints.size() - 1; i++) {
 				Point a = poly.mPoints.get(i);
 				Point b = poly.mPoints.get(i + 1);
-				g.drawLine(a.x, a.y, b.x, b.y);
+				GeoLocation al = mainP.getLocationAt(a);
+				GeoLocation b1 = mainP.getLocationAt(b);
+				Point r1 = p.getPointAt(al);
+				Point r2 = p.getPointAt(b1);
+				g.drawLine(r1.x, r1.y, r2.x, r2.y);
 			}
 
 		}
@@ -117,6 +121,12 @@ public class KmlGeography {
 	 * this map, false otherwise
 	 */
 	private Polygon lastPoly = null;
+
+	public boolean contains(GeoLocation point) {
+		Point p = ModelView.getInstance().getDefaultProjection().getPointAt(
+				point);
+		return contains(p.x, p.y);
+	}
 
 	public boolean contains(int x, int y) {
 		if (lastPoly != null)

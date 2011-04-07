@@ -1,0 +1,6 @@
+pause-hot.png:
+play-normal.png:
+
+	Both retrieved from www.iconseeker.com
+	License is IconsLandStockIconsLicence.txt
+	Free for non-commercial use

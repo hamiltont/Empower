@@ -1,133 +1,142 @@
 package org.turnerha;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
-import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Random;
 
 import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.border.TitledBorder;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.filechooser.FileFilter;
 
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
 import org.turnerha.environment.impl.ImageBackedRealEnvironment;
-import org.turnerha.geography.KmlGeography;
-import org.turnerha.geography.KmlReader;
-import org.turnerha.geography.Projection;
-import org.turnerha.geography.ProjectionCartesian;
-import org.turnerha.policys.collection.ConstantDataCollection;
-import org.turnerha.policys.collection.DataCollectionPolicy;
-import org.turnerha.policys.movement.NodeMovementPolicy;
-import org.turnerha.policys.movement.ProbabilisticMovementPolicy;
-import org.turnerha.sensornodes.SensorNode;
-import org.turnerha.sensornodes.SmartPhone;
 import org.turnerha.server.Server;
 
 public class Main {
 
 	public static int hoursPerHeartbeat = 1;
-	public static int rows = 1; // Do not change this unless you are sure
-	public static int columns = 1; // you can share Smart-phones between models
-	private int mPhoneCount = 1;
+	protected static Integer DEFAULT_PHONE_COUNT = 100;
 	public static boolean DEBUG = false;
 
 	ModelView mModelView;
 	ImageBackedRealEnvironment mRealNetwork;
 	Server mServer;
 
-	public Main(File geoFileNameKml, File networkFileName,
-			double probabilityOfMoving, int mobilityInMeters,
-			int timePerHeartbeat, float inputFrequency, boolean usingGPS) {
-		Dimension screen = Util.getRenderingAreaSize();
+	// GUI elements that need to be updated
+	static JLabel sHours;
 
-		hoursPerHeartbeat = timePerHeartbeat;
+	// GUI elements that need to be read from
+	static int desiredNodeCount = DEFAULT_PHONE_COUNT;
 
-		Random r = new Random();
+	// Useful for allowing dialog parent to be set properly
+	static JFrame sFrame;
 
-		// Read in KML file, and create the KmlGeography
-		KmlReader reader = new KmlReader(geoFileNameKml);
-		Dimension foo = new Dimension(screen);
-		foo.height -= 25; // TODO figure out why I need this??
-		KmlGeography kmlGeography = KmlGeography.init(reader.getPoly(), foo,
-				reader.mTopRight, reader.mBottomLeft);
+	public static void main(String[] args) {
 
-		// Create the server, which internally creates the PerceivedEnvironment
-		// and the MetricCalculator
-		mServer = new Server();
-		new Log(mServer.getMetricCalculator());
+		SwingUtilities.invokeLater(new Runnable() {
 
-		// Create real network
-		ImageBackedRealEnvironment rn = new ImageBackedRealEnvironment(
-				networkFileName, screen, 0.5f, kmlGeography);
-		mRealNetwork = rn;
-		mServer.getMetricCalculator().updateRealEnvironment(mRealNetwork);
+			@Override
+			public void run() {
+				createAndShowGUI();
+			}
 
-		// Create a random hashset of real environments to try
-		HashMap<Integer, File> mEnvironmentalMap = new HashMap<Integer, File>(2);
-		// for (int i = 0; i < 9; i++) {
-		// mEnvironmentalMap.put(new Integer( (i+1) * 200), new File(
-		// "network-images/dynamic-network-images/" + i + ".png"));
-		// }
-		mEnvironmentalMap.put(new Integer(1500), new File(
-				"network-images/horizontal-gradient.png"));
-		// mEnvironmentalMap.put(new Integer(8000), new
-		// File("network-images/network3.png"));
-
-		Projection rando = new ProjectionCartesian(kmlGeography.getGeoBox(),
-				screen);
-
-		// Build Slices
-		// DataCollectionPolicy policy = new MobilityBasedDataCollection(r);
-		DataCollectionPolicy policy = new ConstantDataCollection();
-		//NodeMovementPolicy mPolicy = StaticNodeMovementPolicy.getInstance();
-		NodeMovementPolicy mPolicy = new ProbabilisticMovementPolicy(0.5, r);
-
-		Random generator = new Random();
-		ArrayList<SensorNode> nodes = new ArrayList<SensorNode>(mPhoneCount);
-
-		for (@SuppressWarnings("unused")
-		int o : Util.range(mPhoneCount)) {
-			int x, y;
-			do {
-				x = r.nextInt(screen.width);
-				y = r.nextInt(screen.height);
-			} while (false == kmlGeography.contains(x, y));
-
-			nodes.add(new SmartPhone(new Point(x, y), reader.getPoly(),
-					mServer, rn, rando, policy, mPolicy, generator));
-		}
-
-		// Build the model from the sensor nodes
-		Model model = new Model(nodes);
-
-		ModelController controller = new ModelController(mServer
-				.getMetricCalculator(), mEnvironmentalMap, rn, model);
-
-		// Add the overall keyboard listener
-		KeyboardFocusManager.getCurrentKeyboardFocusManager()
-				.addKeyEventDispatcher(new MyKeyListener(controller));
-
-		// Setup the UI and start the display
-		JFrame frame = new JFrame();
-		frame.setSize(screen);
-		frame.setLayout(null);
-		frame.setTitle("Empower");
-
-		ModelView view = new ModelView(controller, kmlGeography, mRealNetwork,
-				mServer.getMetricCalculator(), model, rando);
-		mModelView = view;
-		view.setBounds(0, 0, screen.width, screen.height);
-
-		frame.add(view);
-		frame.validate();
-		frame.setVisible(true);
-
-		controller.start(view);
+		});
+		/*
+		 * Dimension screen = Util.getRenderingAreaSize();
+		 * 
+		 * Random r = new Random();
+		 * 
+		 * // Read in KML file, and create the KmlGeography KmlReader reader =
+		 * new KmlReader(geoFileNameKml); Dimension foo = new Dimension(screen);
+		 * foo.height -= 25; // TODO figure out why I need this?? KmlGeography
+		 * kmlGeography = KmlGeography.init(reader.getPoly(), foo,
+		 * reader.mTopRight, reader.mBottomLeft);
+		 * 
+		 * // Create the server, which internally creates the
+		 * PerceivedEnvironment // and the MetricCalculator mServer = new
+		 * Server(); new Log(mServer.getMetricCalculator());
+		 * 
+		 * // Create real network ImageBackedRealEnvironment rn = new
+		 * ImageBackedRealEnvironment( networkFileName, screen, 0.5f,
+		 * kmlGeography); mRealNetwork = rn;
+		 * mServer.getMetricCalculator().updateRealEnvironment(mRealNetwork);
+		 * 
+		 * // Create a random hashset of real environments to try
+		 * HashMap<Integer, File> mEnvironmentalMap = new HashMap<Integer,
+		 * File>(2); // for (int i = 0; i < 9; i++) { //
+		 * mEnvironmentalMap.put(new Integer( (i+1) * 200), new File( //
+		 * "network-images/dynamic-network-images/" + i + ".png")); // }
+		 * mEnvironmentalMap.put(new Integer(1500), new File(
+		 * "network-images/horizontal-gradient.png")); //
+		 * mEnvironmentalMap.put(new Integer(8000), new //
+		 * File("network-images/network3.png"));
+		 * 
+		 * Projection rando = new ProjectionCartesian(kmlGeography.getGeoBox(),
+		 * screen);
+		 * 
+		 * // Build Slices // DataCollectionPolicy policy = new
+		 * MobilityBasedDataCollection(r); DataCollectionPolicy policy = new
+		 * ConstantDataCollection(); // NodeMovementPolicy mPolicy =
+		 * StaticNodeMovementPolicy.getInstance(); NodeMovementPolicy mPolicy =
+		 * new ProbabilisticMovementPolicy(0.5, r);
+		 * 
+		 * Random generator = new Random(); ArrayList<SensorNode> nodes = new
+		 * ArrayList<SensorNode>(mPhoneCount);
+		 * 
+		 * for (@SuppressWarnings("unused") int o : Util.range(mPhoneCount)) {
+		 * int x, y; do { x = r.nextInt(screen.width); y =
+		 * r.nextInt(screen.height); } while (false == kmlGeography.contains(x,
+		 * y));
+		 * 
+		 * nodes.add(new SmartPhone(new Point(x, y), reader.getPoly(), mServer,
+		 * rn, rando, policy, mPolicy, generator)); }
+		 * 
+		 * // Build the model from the sensor nodes Model model = new
+		 * Model(nodes);
+		 * 
+		 * ModelController controller = new ModelController(mServer
+		 * .getMetricCalculator(), mEnvironmentalMap, rn, model);
+		 * 
+		 * // Add the overall keyboard listener
+		 * KeyboardFocusManager.getCurrentKeyboardFocusManager()
+		 * .addKeyEventDispatcher(new MyKeyListener(controller));
+		 * 
+		 * // Setup the UI and start the display JFrame frame = new JFrame();
+		 * frame.setSize(screen); frame.setLayout(null);
+		 * frame.setTitle("Empower");
+		 * 
+		 * ModelView view = new ModelView(controller, kmlGeography,
+		 * mRealNetwork, mServer.getMetricCalculator(), model, rando);
+		 * mModelView = view; view.setBounds(0, 0, screen.width, screen.height);
+		 * 
+		 * frame.add(view); frame.validate(); frame.setVisible(true);
+		 * 
+		 * controller.start(view);
+		 */
 	}
 
 	private class MyKeyListener implements KeyEventDispatcher {
@@ -142,30 +151,15 @@ public class Main {
 		@Override
 		public boolean dispatchKeyEvent(KeyEvent e) {
 			switch (e.getKeyCode()) {
-			case KeyEvent.VK_PLUS:
-			case KeyEvent.VK_EQUALS:
-				// Plus means speed system up, which means decrease sleep time
-				if (mc.sleepTime.get() <= 0)
-					return true;
-
-				mc.sleepTime.addAndGet(speedFactor * -1);
-				return true;
-
-			case KeyEvent.VK_MINUS:
-			case KeyEvent.VK_UNDERSCORE:
-				// Plus means slow system down, which means increase sleep time
-
-				mc.sleepTime.addAndGet(speedFactor);
-				return true;
 
 			case KeyEvent.VK_P:
 				// Means switch to perceived network
-				mModelView.setDisplayNetwork(mServer.getPerceivedEnvironment());
+				mModelView.setDisplayNetwork(true);
 				return true;
 
 			case KeyEvent.VK_R:
 				// Means switch to real network
-				mModelView.setDisplayNetwork(mRealNetwork);
+				mModelView.setDisplayNetwork(false);
 				return true;
 
 			case KeyEvent.VK_ESCAPE:
@@ -201,5 +195,245 @@ public class Main {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private static void createAndShowGUI() {
+		JFrame frame = new JFrame("Empower Simulation Environment");
+		sFrame = frame;
+		// TODO popup an 'are you sure' if a simulation is running
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		if (false == frame.getContentPane().getLayout() instanceof BorderLayout)
+			frame.getContentPane().setLayout(new BorderLayout());
+
+		Dimension fullScreen = Toolkit.getDefaultToolkit().getScreenSize();
+		Container contentPane = frame.getContentPane();
+		contentPane.setPreferredSize(fullScreen);
+
+		JPanel left = createLeft();
+		left.setPreferredSize(new Dimension((int) Math.max(
+				fullScreen.width * 0.35, 300), Short.MAX_VALUE));
+		left
+				.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 2,
+						Color.BLACK));
+		contentPane.add(left, BorderLayout.LINE_START);
+
+		contentPane.add(createCenter(), BorderLayout.CENTER);
+
+		frame.pack();
+		frame.setVisible(true);
+	}
+
+	private static JPanel createCenter() {
+		Dimension fullScreen = Toolkit.getDefaultToolkit().getScreenSize();
+		JPanel center = new JPanel(new BorderLayout());
+
+		JPanel bottom = new JPanel();
+		bottom.setPreferredSize(new Dimension(Short.MAX_VALUE, (int) Math.max(
+				fullScreen.height * 0.33, 300)));
+		bottom.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0,
+				Color.BLACK));
+		center.add(bottom, BorderLayout.PAGE_END);
+
+		ModelView mv = ModelView.getInstance();
+		// mv.setPreferredSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
+		mv.setPreferredSize(new Dimension(100, 100));
+		mv.setBorder(BorderFactory.createLineBorder(Color.RED, 4));
+		center.add(mv, BorderLayout.CENTER);
+
+		return center;
+	}
+
+	private static JPanel createLeft() {
+		JPanel left = new JPanel();
+		left.setLayout(new BoxLayout(left, BoxLayout.PAGE_AXIS));
+
+		JPanel params = createParams();
+		params.setBorder(BorderFactory.createTitledBorder(BorderFactory
+				.createEmptyBorder(), "Parameters", TitledBorder.LEADING,
+				TitledBorder.ABOVE_TOP, new Font(null, Font.BOLD, 20)));
+		params.setMaximumSize(new Dimension(Short.MAX_VALUE, params
+				.getPreferredSize().height));
+		left.add(params);
+
+		JPanel policy = createPolicy();
+		policy.setBorder(BorderFactory.createTitledBorder(BorderFactory
+				.createEmptyBorder(), "Policies", TitledBorder.LEADING,
+				TitledBorder.ABOVE_TOP, new Font(null, Font.BOLD, 20)));
+		policy.setMaximumSize(new Dimension(Short.MAX_VALUE, policy
+				.getPreferredSize().height));
+		left.add(policy);
+
+		left.add(Box.createVerticalGlue());
+
+		JPanel control = createControl();
+		control.setMaximumSize(new Dimension(Short.MAX_VALUE, control
+				.getPreferredSize().height));
+		left.add(control);
+
+		return left;
+	}
+
+	private static JPanel createParams() {
+		JPanel params = new JPanel();
+		params.setLayout(new BoxLayout(params, BoxLayout.PAGE_AXIS));
+
+		params.add(createParam_kml());
+
+		params.add(createParam_nodeCount());
+
+		return params;
+
+	}
+
+	private static JPanel createParam_nodeCount() {
+		JPanel nc = new JPanel();
+		nc.setLayout(new BoxLayout(nc, BoxLayout.LINE_AXIS));
+
+		nc.add(Box.createHorizontalStrut(30));
+		JLabel lab = new JLabel("Number of Sensor Nodes: ");
+		nc.add(lab);
+
+		nc.add(Box.createHorizontalGlue());
+		final JTextField num = new JTextField(DEFAULT_PHONE_COUNT.toString());
+		num.setColumns(10);
+		num.setMaximumSize(num.getPreferredSize());
+		num.addCaretListener(new CaretListener() {
+
+			@Override
+			public void caretUpdate(CaretEvent e) {
+				System.out.println("Action!");
+				String val = num.getText();
+				try {
+					int i = Integer.parseInt(val);
+					desiredNodeCount = i;
+				} catch (NumberFormatException nfe) {
+					// TODO show error dialog
+				}
+			}
+		});
+		nc.add(num);
+		nc.add(Box.createHorizontalStrut(30));
+
+		return nc;
+	}
+
+	private static JPanel createParam_kml() {
+		JPanel kml_p = new JPanel();
+		kml_p.setLayout(new BoxLayout(kml_p, BoxLayout.LINE_AXIS));
+
+		kml_p.add(Box.createHorizontalStrut(30));
+
+		JLabel kml = new JLabel("KML: ");
+		kml_p.add(kml);
+
+		final JLabel filename = new JLabel("No file selected");
+		filename.setForeground(Color.RED);
+		kml_p.add(filename);
+
+		kml_p.add(Box.createHorizontalGlue());
+
+		JButton choose = new JButton("Edit");
+		choose.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				JFileChooser fc = new JFileChooser();
+				fc.setFileFilter(new FileFilter() {
+
+					@Override
+					public String getDescription() {
+						return "*.kml - XML grammar for geographic data";
+					}
+
+					@Override
+					public boolean accept(File f) {
+						if (f.getName().endsWith(".kml"))
+							return true;
+						return false;
+					}
+				});
+
+				int result = fc.showOpenDialog(sFrame);
+
+				if (result == JFileChooser.APPROVE_OPTION) {
+					File file = fc.getSelectedFile();
+					// TODO update
+					// if (Model.getInstance().setKml(file)) {
+					// filename.setText(file.getName());
+					// filename.setForeground(Color.BLACK);
+					// filename.invalidate();
+					// } // TODO add an else and show an error dialog
+				} // TODO add a check for error and show an error dialog
+			}
+		});
+		kml_p.add(choose);
+
+		kml_p.add(Box.createHorizontalStrut(30));
+
+		return kml_p;
+	}
+
+	private static JPanel createPolicy() {
+		JPanel policy = new JPanel();
+		policy.setLayout(new BoxLayout(policy, BoxLayout.PAGE_AXIS));
+
+		// TODO add all policies and add an 'edit' button to each
+		JPanel movement = new JPanel();
+		movement.setBorder(BorderFactory.createTitledBorder(BorderFactory
+				.createEtchedBorder(), "Node Movement"));
+		movement.setMaximumSize(new Dimension(Short.MAX_VALUE, movement
+				.getPreferredSize().height));
+		policy.add(movement);
+		
+		JPanel collection = new JPanel();
+		collection.setBorder(BorderFactory.createTitledBorder(BorderFactory
+				.createEtchedBorder(), "Data Collection"));
+		collection.setMaximumSize(new Dimension(Short.MAX_VALUE, collection
+				.getPreferredSize().height));
+		policy.add(collection);
+		
+		JPanel reporting = new JPanel();
+		reporting.setBorder(BorderFactory.createTitledBorder(BorderFactory
+				.createEtchedBorder(), "Data Reporting"));
+		reporting.setMaximumSize(new Dimension(Short.MAX_VALUE, reporting
+				.getPreferredSize().height));
+		policy.add(reporting);
+
+
+		return policy;
+	}
+
+	private static JPanel createControl() {
+		JPanel control = new JPanel();
+		control.setLayout(new BoxLayout(control, BoxLayout.LINE_AXIS));
+
+		JButton play = new JButton(new ImageIcon("images/play-normal.png"));
+		play.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Model.getInstance().updateNodeCount(desiredNodeCount);
+				ModelController.getInstance().start();
+			}
+		});
+		control.add(play);
+
+		JButton pause = new JButton(new ImageIcon("images/pause-hot.png"));
+		pause.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				ModelController.getInstance().pause();
+			}
+		});
+		control.add(pause);
+
+		control.add(Box.createHorizontalGlue());
+
+		JLabel hours = new JLabel("0 hours");
+		sHours = hours;
+		hours.setFont(new Font(null, Font.PLAIN, 18));
+		hours.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 50));
+		control.add(hours);
+
+		return control;
 	}
 }

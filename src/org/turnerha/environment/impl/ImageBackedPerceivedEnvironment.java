@@ -13,6 +13,7 @@ import java.awt.Transparency;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 
+import org.turnerha.Model;
 import org.turnerha.Util;
 import org.turnerha.environment.MetricCalculator;
 import org.turnerha.environment.PerceivedEnvironment;
@@ -20,7 +21,6 @@ import org.turnerha.environment.utils.BlendComposite;
 import org.turnerha.environment.utils.EnvironUtils;
 import org.turnerha.geography.GeoBox;
 import org.turnerha.geography.GeoLocation;
-import org.turnerha.geography.KmlGeography;
 import org.turnerha.geography.Projection;
 import org.turnerha.geography.ProjectionCartesian;
 
@@ -46,7 +46,7 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	public ImageBackedPerceivedEnvironment(MetricCalculator mc) {
 		Dimension size = Util.getRenderingAreaSize();
 
-		mProjection = new ProjectionCartesian(KmlGeography.getInstance()
+		mProjection = new ProjectionCartesian(Model.getInstance().getKml()
 				.getGeoBox(), size);
 		mMetricCalc = mc;
 

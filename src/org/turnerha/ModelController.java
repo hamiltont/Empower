@@ -2,13 +2,12 @@ package org.turnerha;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.SwingWorker;
 
 import org.turnerha.environment.MetricCalculator;
-import org.turnerha.environment.RealEnvironment;
-import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 
 /**
  * Controls the interactions b/w the Model and the ModelView, and does some
@@ -29,45 +28,72 @@ import org.turnerha.environment.impl.ImageBackedRealEnvironment;
  * 
  */
 public class ModelController {
-	public AtomicInteger sleepTime = new AtomicInteger(500);
 	private MetricCalculator mMetricCalc;
-
 	private int mHeartbeatCount = 0;
+
 	private HashMap<Integer, File> mRealEnvironMap;
-	private RealEnvironment mRealEnvironment;
 	private Model mModel;
 	private ModelView mModelView;
 
+	private static ModelController instance_;
+
 	private boolean isUpdating = false;
+	private boolean isPaused = true;
 
-	public ModelController(MetricCalculator mc,
-			HashMap<Integer, File> realEnvironmentMap, RealEnvironment re,
-			Model model) {
-
-		mMetricCalc = mc;
-
-		mRealEnvironMap = realEnvironmentMap;
-		mRealEnvironment = re;
-		mModel = model;
+	public static ModelController getInstance() {
+		return instance_;
 	}
 
-	public void start(ModelView view) {
+	public ModelController(ModelView view) {
+		instance_ = this;
 		mModelView = view;
-		mModelView.repaint();
-		System.out.println("Start Called");
+		mMetricCalc = Model.getInstance().getServer().getMetricCalculator();
 	}
+
+	public void setDynamicEnvironmentMap(HashMap<Integer, File> environments) {
+		mRealEnvironMap = environments;
+	}
+
+	public void start() {
+		mModelView.repaint();
+		isPaused = false;
+	}
+	
+	public void pause() {
+		isPaused = true;
+	}
+	
+	public boolean isPaused() {
+		return isPaused;
+	}
+	
 
 	/**
 	 * Called by the model when an update is finished
 	 */
 	protected void doneRendering() {
+		String s = Integer.toString(mHeartbeatCount) + " hours";
+		Main.sHours.setText(s);
+		Main.sHours.invalidate();
+		
 		if (isUpdating)
+			return;
+		
+		if (isPaused)
 			return;
 
 		System.out.println("Done rendering");
-		ModelUpdater updater = new ModelUpdater();
-		isUpdating = true;
-		updater.execute();
+		Timer t = new Timer("foo");
+		t.schedule(new TimerTask() {
+			
+			@Override
+			public void run() {
+				ModelUpdater updater = new ModelUpdater();
+				isUpdating = true;
+				updater.execute();
+			}
+		}, 1000);
+
 	}
 
 	public int getHeartbeatCount() {
@@ -95,7 +121,7 @@ public class ModelController {
 		protected Void doInBackground() throws Exception {
 			System.out.println("Updator running");
 
-			mModel.update();
+			Model.getInstance().update();
 
 			// Slow down the simulation a bit
 			// Thread.sleep(sleepTime.get());
@@ -113,12 +139,15 @@ public class ModelController {
 
 			// Determine if the real network needs to be replaced
 			// TODO move this to a background thread
-			if (mRealEnvironMap.containsKey(new Integer(mHeartbeatCount))) {
-				((ImageBackedRealEnvironment) mRealEnvironment)
-						.loadNewEnvironment(mRealEnvironMap.get(new Integer(
-								mHeartbeatCount)));
-				mMetricCalc.updateRealEnvironment(mRealEnvironment);
-			}
+			// TODO remove the outer if check once I have added the GUI to
+			// actually specify that there is a real environment
+			if (mRealEnvironMap != null)
+				if (mRealEnvironMap.containsKey(new Integer(mHeartbeatCount))) {
+					mModel.getRealEnvironment().loadNewEnvironment(
+							mRealEnvironMap.get(new Integer(mHeartbeatCount)));
+					mMetricCalc.updateRealEnvironment(mModel
+							.getRealEnvironment());
+				}
 
 			// Reset the usefulness measures so they are calculated on a
 			// per-heartbeat basis
