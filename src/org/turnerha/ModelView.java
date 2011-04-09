@@ -57,6 +57,12 @@ public class ModelView extends JPanel {
 		mProjection = getDefaultProjection();
 	}
 
+	/**
+	 * Get the first projection used, which shows the entire KML geography
+	 * centered in the {@link ModelView}
+	 * 
+	 * @return
+	 */
 	public Projection getDefaultProjection() {
 		if (defaultProjection != null)
 			return defaultProjection;
@@ -69,6 +75,10 @@ public class ModelView extends JPanel {
 		defaultProjection = new ProjectionCartesian(
 				mModel.getKml().getGeoBox(), getRenderingArea());
 		return defaultProjection;
+	}
+	
+	public Projection getCurrentProjection() {
+		return null;
 	}
 
 	public static ModelView getInstance() {
@@ -100,6 +110,10 @@ public class ModelView extends JPanel {
 
 	@Override
 	public void paint(Graphics g) {
+		
+		g.setColor(Color.GRAY);
+		g.fillRect(0, 0, getWidth(), getHeight());
+		
 		// This is nasty, but I need a way to hook all my user-driven control
 		// flow into the event-driven flow, and the first time ModelView is
 		// painted is perfect. I hate myself for this
@@ -118,9 +132,6 @@ public class ModelView extends JPanel {
 
 		long start = System.nanoTime();
 		calculateFrameRate();
-
-		g.setColor(Color.GRAY);
-		g.fillRect(0, 0, getWidth(), getHeight());
 
 		if (mModel.getKml() != null && mProjection == null)
 			resetDefaultProjection();
@@ -218,10 +229,5 @@ public class ModelView extends JPanel {
 		if (updateTimes.size() == 31)
 			updateTimes.remove(0);
 
-	}
-
-	public void update(Graphics g) {
-		System.out.println("Update called");
-		super.update(g);
 	}
 }

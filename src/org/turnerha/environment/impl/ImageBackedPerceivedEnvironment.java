@@ -14,6 +14,7 @@ import java.awt.image.BufferedImage;
 import java.util.HashMap;
 
 import org.turnerha.Model;
+import org.turnerha.ModelView;
 import org.turnerha.Util;
 import org.turnerha.environment.MetricCalculator;
 import org.turnerha.environment.PerceivedEnvironment;
@@ -35,19 +36,11 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	 */
 	private int mReadings = 0;
 
-	/**
-	 * The projection between the pixel values in the backing image model data
-	 * and real-world latitude longitude
-	 */
-	private ProjectionCartesian mProjection;
-
 	private MetricCalculator mMetricCalc;
 
 	public ImageBackedPerceivedEnvironment(MetricCalculator mc) {
 		Dimension size = Util.getRenderingAreaSize();
 
-		mProjection = new ProjectionCartesian(Model.getInstance().getKml()
-				.getGeoBox(), size);
 		mMetricCalc = mc;
 
 		// Setup Perceived Network Image
@@ -57,7 +50,7 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	@Override
 	public void addReading(int value, GeoLocation loc) {
 
-		Point p = mProjection.getPointAt(loc);
+		Point p = ModelView.getInstance().getProjection().getPointAt(loc);
 
 		// Let the metric calculator remove the effect due to p
 		Point[] affectedPoints = new Point[5 * 5];
@@ -112,12 +105,12 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 		int w = mNetwork.getWidth();
 		int h = mNetwork.getHeight();
 
-		return mProjection.getGeoBoxOf(new Rectangle(w, h));
+		return ModelView.getInstance().getProjection().getGeoBoxOf(new Rectangle(w, h));
 	}
 
 	@Override
 	public int getValueAt(GeoLocation location) {
-		Point p = mProjection.getPointAt(location);
+		Point p = ModelView.getInstance().getProjection().getPointAt(location);
 		return mNetwork.getRGB(p.x, p.y);
 	}
 

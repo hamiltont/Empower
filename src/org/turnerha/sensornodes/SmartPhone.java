@@ -32,10 +32,10 @@ public class SmartPhone implements SensorNode {
 	 * collection, data reporting, etc
 	 */
 	public void update() {
+		
 		if (mMovementPolicy.shouldMove(this)) {
-			// Move
-			double xChange = mRandom.nextDouble() / 100d;
-			double yChange = mRandom.nextDouble() / 100d;
+			double xChange = mRandom.nextDouble() / 10d;
+			double yChange = mRandom.nextDouble() / 10d;
 			boolean xRight = mRandom.nextBoolean();
 			boolean yUp = mRandom.nextBoolean();
 
@@ -63,7 +63,8 @@ public class SmartPhone implements SensorNode {
 					mLocation.lat -= yChange;
 				else
 					mLocation.lat += yChange;
-			}
+			}			
+			
 		}
 
 		// Move complete. Should we collect data?

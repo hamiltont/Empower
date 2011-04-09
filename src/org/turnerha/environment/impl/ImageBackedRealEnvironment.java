@@ -11,6 +11,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import org.turnerha.ModelView;
 import org.turnerha.environment.RealEnvironment;
 import org.turnerha.geography.GeoBox;
 import org.turnerha.geography.GeoLocation;
@@ -50,7 +51,7 @@ public class ImageBackedRealEnvironment implements RealEnvironment {
 
 		mSize = size;
 
-		mProjection = new ProjectionCartesian(kmlGeography.getGeoBox(), size);
+		mProjection = (ProjectionCartesian) ModelView.getInstance().getProjection();
 
 		// Setup the alpha operation
 		float[] scales = { 1f, 1f, 1f, 0.5f };

@@ -58,15 +58,14 @@ public class ModelController {
 		mModelView.repaint();
 		isPaused = false;
 	}
-	
+
 	public void pause() {
 		isPaused = true;
 	}
-	
+
 	public boolean isPaused() {
 		return isPaused;
 	}
-	
 
 	/**
 	 * Called by the model when an update is finished
@@ -75,17 +74,16 @@ public class ModelController {
 		String s = Integer.toString(mHeartbeatCount) + " hours";
 		Main.sHours.setText(s);
 		Main.sHours.invalidate();
-		
+
 		if (isUpdating)
 			return;
-		
+
 		if (isPaused)
 			return;
 
-		System.out.println("Done rendering");
 		Timer t = new Timer("foo");
 		t.schedule(new TimerTask() {
-			
+
 			@Override
 			public void run() {
 				ModelUpdater updater = new ModelUpdater();
@@ -118,20 +116,20 @@ public class ModelController {
 	private class ModelUpdater extends SwingWorker<Void, Void> {
 
 		@Override
-		protected Void doInBackground() throws Exception {
-			System.out.println("Updator running");
-
-			Model.getInstance().update();
-
-			// Slow down the simulation a bit
-			// Thread.sleep(sleepTime.get());
+		protected Void doInBackground() {
+			try {
+								
+				Model.getInstance().update();
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 
 			return null;
 		}
 
 		@Override
 		protected void done() {
-			System.out.println("Updator done");
 			mHeartbeatCount++;
 
 			// Print out some metrics

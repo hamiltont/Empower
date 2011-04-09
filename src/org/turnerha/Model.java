@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import org.turnerha.environment.RealEnvironment;
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
 import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 import org.turnerha.geography.GeoLocation;
@@ -84,6 +85,11 @@ public class Model {
 		mKml = kmlgeo; // TODO If the ModelView is caching a rendering of KmlGeo
 		// in a buffer, we should tell it to clear
 	}
+	
+	public void setRealEnvironment(RealEnvironment re) {
+		mRealEnv = (ImageBackedRealEnvironment) re;
+		mServer.getMetricCalculator().updateRealEnvironment(mRealEnv);
+	}
 
 	public static KmlGeography getGeo(File kmlFile) {
 		KmlReader reader = new KmlReader();
@@ -104,8 +110,13 @@ public class Model {
 	}
 
 	public void update() {
-		for (SensorNode s : mNodes)
-			s.update();
+		for (int i = 0; i < mNodes.size(); i++) {
+			try {
+				mNodes.get(i).update();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public List<SensorNode> getNodes() {
@@ -136,12 +147,14 @@ public class Model {
 
 				SmartPhone s = new SmartPhone(loc,
 						new ConstantDataCollection(),
-						new ProbabilisticMovementPolicy(1, mRandom), mRandom);
+						new ProbabilisticMovementPolicy(1, new Random()),
+						new Random());
 				mNodes.add(s);
 			}
-		} else if (mNodes.size() > desiredNodeCount) {
+		} else if (mNodes.size() > desiredNodeCount)
 			// TODO create some sort of fair removal
-			mNodes = mNodes.subList(0, desiredNodeCount - 1);
-		}
+			while (mNodes.size() != desiredNodeCount)
+				mNodes.remove(mNodes.size() - 1);
+
 	}
 }

@@ -20,11 +20,11 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
@@ -228,20 +228,52 @@ public class Main {
 		Dimension fullScreen = Toolkit.getDefaultToolkit().getScreenSize();
 		JPanel center = new JPanel(new BorderLayout());
 
-		JPanel bottom = new JPanel();
+		JPanel bottom = createBottom();
 		bottom.setPreferredSize(new Dimension(Short.MAX_VALUE, (int) Math.max(
-				fullScreen.height * 0.33, 300)));
-		bottom.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0,
-				Color.BLACK));
+				fullScreen.height * 0.40, 300)));
 		center.add(bottom, BorderLayout.PAGE_END);
 
 		ModelView mv = ModelView.getInstance();
 		// mv.setPreferredSize(new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
 		mv.setPreferredSize(new Dimension(100, 100));
 		mv.setBorder(BorderFactory.createLineBorder(Color.RED, 4));
+		mv.setBackground(Color.GRAY);
 		center.add(mv, BorderLayout.CENTER);
 
 		return center;
+	}
+	
+	private static JPanel createBottom() {
+		
+		JPanel wrapper = new JPanel(new BorderLayout());
+		
+		JPanel controls = createBottom_controls();
+		wrapper.add(controls, BorderLayout.PAGE_START);
+		
+		
+		JTabbedPane metrics = new JTabbedPane();
+		metrics.addTab("Overview", new JPanel());
+		metrics.addTab("Accuracy", new JPanel());
+		metrics.addTab("Coverage", new JPanel());
+		metrics.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0,
+				Color.BLACK));
+		wrapper.add(metrics, BorderLayout.CENTER);
+		
+		
+		return wrapper;
+	}
+	
+	private static JPanel createBottom_controls() {
+		JPanel controls = new JPanel();
+		controls.setLayout(new BoxLayout(controls, BoxLayout.LINE_AXIS));
+		controls.setBackground(Color.GRAY);
+		controls.setPreferredSize(new Dimension(Short.MAX_VALUE, 20));
+		
+		JButton r = new JButton("right");
+		r.setAlignmentX(Component.RIGHT_ALIGNMENT);
+		controls.add(r);
+		
+		return controls;
 	}
 
 	private static JPanel createLeft() {
@@ -282,6 +314,8 @@ public class Main {
 
 		params.add(createParam_nodeCount());
 
+		params.add(createParam_realNW());
+
 		return params;
 
 	}
@@ -302,7 +336,6 @@ public class Main {
 
 			@Override
 			public void caretUpdate(CaretEvent e) {
-				System.out.println("Action!");
 				String val = num.getText();
 				try {
 					int i = Integer.parseInt(val);
@@ -357,12 +390,70 @@ public class Main {
 
 				if (result == JFileChooser.APPROVE_OPTION) {
 					File file = fc.getSelectedFile();
-					// TODO update
-					// if (Model.getInstance().setKml(file)) {
-					// filename.setText(file.getName());
-					// filename.setForeground(Color.BLACK);
-					// filename.invalidate();
-					// } // TODO add an else and show an error dialog
+					Model.getInstance()
+							.setKml(Model.getInstance().getGeo(file));
+					filename.setText(file.getName());
+					filename.setForeground(Color.BLACK);
+					filename.invalidate();
+					// TODO add an else and show an error dialog
+				} // TODO add a check for error and show an error dialog
+			}
+		});
+		kml_p.add(choose);
+
+		kml_p.add(Box.createHorizontalStrut(30));
+
+		return kml_p;
+	}
+
+	private static JPanel createParam_realNW() {
+		JPanel kml_p = new JPanel();
+		kml_p.setLayout(new BoxLayout(kml_p, BoxLayout.LINE_AXIS));
+
+		kml_p.add(Box.createHorizontalStrut(30));
+
+		JLabel kml = new JLabel("Real Environ: ");
+		kml_p.add(kml);
+
+		final JLabel filename = new JLabel("No file selected");
+		filename.setForeground(Color.RED);
+		kml_p.add(filename);
+
+		kml_p.add(Box.createHorizontalGlue());
+
+		JButton choose = new JButton("Edit");
+		choose.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				JFileChooser fc = new JFileChooser();
+				fc.setFileFilter(new FileFilter() {
+
+					@Override
+					public String getDescription() {
+						return "*.png - PNG Image File";
+					}
+
+					@Override
+					public boolean accept(File f) {
+						if (f.getName().endsWith(".png"))
+							return true;
+						return false;
+					}
+				});
+
+				int result = fc.showOpenDialog(sFrame);
+
+				if (result == JFileChooser.APPROVE_OPTION) {
+					File file = fc.getSelectedFile();
+					ImageBackedRealEnvironment i = new ImageBackedRealEnvironment(
+							file, ModelView.getInstance().getRenderingArea(),
+							(float) 0.5, Model.getInstance().getKml());
+					Model.getInstance().setRealEnvironment(i);
+					filename.setText(file.getName());
+					filename.setForeground(Color.BLACK);
+					filename.invalidate();
+
+					// TODO add an else and show an error dialog
 				} // TODO add a check for error and show an error dialog
 			}
 		});
@@ -384,21 +475,20 @@ public class Main {
 		movement.setMaximumSize(new Dimension(Short.MAX_VALUE, movement
 				.getPreferredSize().height));
 		policy.add(movement);
-		
+
 		JPanel collection = new JPanel();
 		collection.setBorder(BorderFactory.createTitledBorder(BorderFactory
 				.createEtchedBorder(), "Data Collection"));
 		collection.setMaximumSize(new Dimension(Short.MAX_VALUE, collection
 				.getPreferredSize().height));
 		policy.add(collection);
-		
+
 		JPanel reporting = new JPanel();
 		reporting.setBorder(BorderFactory.createTitledBorder(BorderFactory
 				.createEtchedBorder(), "Data Reporting"));
 		reporting.setMaximumSize(new Dimension(Short.MAX_VALUE, reporting
 				.getPreferredSize().height));
 		policy.add(reporting);
-
 
 		return policy;
 	}

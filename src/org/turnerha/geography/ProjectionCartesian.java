@@ -21,6 +21,7 @@ public class ProjectionCartesian implements Projection {
 	 *            to the {@link Dimension} before calling this
 	 */
 	public ProjectionCartesian(GeoBox geoBox, Dimension desiredDimension) {
+		
 		mGeoBox = geoBox;
 		mDesiredSize = desiredDimension;
 		
