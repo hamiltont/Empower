@@ -80,8 +80,10 @@ public class ModelController {
 		Main.sHours.setText(s);
 		Main.sHours.invalidate();
 		currentSimulationHour = currentSimulationHour.next();
-		Main.sAccuracy.add(currentSimulationHour, Model.getInstance()
-				.getServer().getMetricCalculator().getAccuracy());
+		MetricCalculator mc = Model.getInstance().getServer().getMetricCalculator();
+		Main.sAccuracy.add(currentSimulationHour, mc.getAccuracy());
+		Main.sCoverage.add(currentSimulationHour, mc.getCoverage());
+		
 		
 
 		if (isUpdating)

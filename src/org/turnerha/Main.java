@@ -37,9 +37,6 @@ import javax.swing.filechooser.FileFilter;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.data.time.Day;
-import org.jfree.data.time.Hour;
-import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
 import org.turnerha.environment.impl.ImageBackedRealEnvironment;
@@ -59,6 +56,7 @@ public class Main {
 	// GUI elements that need to be updated
 	static JLabel sHours;
 	static PausableTimeSeries sAccuracy;
+	static PausableTimeSeries sCoverage;
 
 	// GUI elements that need to be read from
 	static int desiredNodeCount = DEFAULT_PHONE_COUNT;
@@ -264,7 +262,7 @@ public class Main {
 		final JTabbedPane metrics = new JTabbedPane();
 		metrics.addTab("Overview", new JPanel());
 		metrics.addTab("Accuracy", createBottom_accuracy());
-		metrics.addTab("Coverage", new JPanel());
+		metrics.addTab("Coverage", createBottom_coverage());
 		metrics.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0,
 				Color.BLACK));
 		wrapper.add(metrics, BorderLayout.CENTER);
@@ -276,10 +274,13 @@ public class Main {
 				String title = metrics.getTitleAt(metrics.getSelectedIndex());
 				if (title.equals("Accuracy")) {
 					sAccuracy.setPaused(false);
+					sCoverage.setPaused(true);
 				} else if (title.equals("Overview")) {
 					sAccuracy.setPaused(true);
+					sCoverage.setPaused(true);
 				} else if (title.equals("Coverage")) {
 					sAccuracy.setPaused(true);
+					sCoverage.setPaused(false);
 				}
 					
 			}
@@ -300,6 +301,20 @@ public class Main {
 		ChartPanel cp = new ChartPanel(c);
 		return cp;
 	}
+	
+	private static ChartPanel createBottom_coverage() {
+
+		sCoverage = new PausableTimeSeries("");
+		
+		TimeSeriesCollection dataset = new TimeSeriesCollection(sCoverage);
+
+		JFreeChart c = ChartFactory.createTimeSeriesChart("Coverage",
+				"", "Percent", dataset, false, false, false);
+		c.setBackgroundPaint(new JPanel(false).getBackground());
+		ChartPanel cp = new ChartPanel(c);
+		return cp;
+	}
+
 
 	private static JPanel createBottom_controls() {
 		JPanel controls = new JPanel();
