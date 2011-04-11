@@ -30,6 +30,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 
 import org.jfree.chart.ChartFactory;
@@ -41,6 +43,7 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
 import org.turnerha.environment.impl.ImageBackedRealEnvironment;
+import org.turnerha.misc.PausableTimeSeries;
 import org.turnerha.server.Server;
 
 public class Main {
@@ -55,7 +58,7 @@ public class Main {
 
 	// GUI elements that need to be updated
 	static JLabel sHours;
-	static TimeSeries sAccuracy;
+	static PausableTimeSeries sAccuracy;
 
 	// GUI elements that need to be read from
 	static int desiredNodeCount = DEFAULT_PHONE_COUNT;
@@ -258,20 +261,36 @@ public class Main {
 		JPanel controls = createBottom_controls();
 		wrapper.add(controls, BorderLayout.PAGE_START);
 
-		JTabbedPane metrics = new JTabbedPane();
+		final JTabbedPane metrics = new JTabbedPane();
 		metrics.addTab("Overview", new JPanel());
 		metrics.addTab("Accuracy", createBottom_accuracy());
 		metrics.addTab("Coverage", new JPanel());
 		metrics.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0,
 				Color.BLACK));
 		wrapper.add(metrics, BorderLayout.CENTER);
+		
+		metrics.addChangeListener(new ChangeListener() {
+			
+			@Override
+			public void stateChanged(ChangeEvent arg0) {
+				String title = metrics.getTitleAt(metrics.getSelectedIndex());
+				if (title.equals("Accuracy")) {
+					sAccuracy.setPaused(false);
+				} else if (title.equals("Overview")) {
+					sAccuracy.setPaused(true);
+				} else if (title.equals("Coverage")) {
+					sAccuracy.setPaused(true);
+				}
+					
+			}
+		});
 
 		return wrapper;
 	}
 
 	private static ChartPanel createBottom_accuracy() {
 
-		sAccuracy = new TimeSeries("");
+		sAccuracy = new PausableTimeSeries("");
 		
 		TimeSeriesCollection dataset = new TimeSeriesCollection(sAccuracy);
 
