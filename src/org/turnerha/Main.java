@@ -268,10 +268,44 @@ public class Main {
 		controls.setLayout(new BoxLayout(controls, BoxLayout.LINE_AXIS));
 		controls.setBackground(Color.GRAY);
 		controls.setPreferredSize(new Dimension(Short.MAX_VALUE, 20));
+	
+		controls.add(Box.createHorizontalGlue());
 		
-		JButton r = new JButton("right");
+		Dimension preferred = new Dimension(20, Short.MAX_VALUE);
+		
+		JButton r = new JButton(">");
 		r.setAlignmentX(Component.RIGHT_ALIGNMENT);
+		r.setPreferredSize(preferred);
 		controls.add(r);
+		
+		JButton l = new JButton("<");
+		l.setAlignmentX(Component.RIGHT_ALIGNMENT);
+		l.setPreferredSize(preferred);
+		controls.add(l);
+		
+		JButton u = new JButton("^");
+		u.setAlignmentX(Component.RIGHT_ALIGNMENT);
+		u.setPreferredSize(preferred);
+		controls.add(u);
+		
+		JButton d = new JButton("v");
+		d.setAlignmentX(Component.RIGHT_ALIGNMENT);
+		d.setPreferredSize(preferred);
+		controls.add(d);
+		
+		controls.add(Box.createHorizontalStrut(10));
+		
+		JButton in = new JButton("+");
+		in.setAlignmentX(Component.RIGHT_ALIGNMENT);
+		in.setPreferredSize(preferred);
+		controls.add(in);
+		
+		JButton out = new JButton("-");
+		out.setAlignmentX(Component.RIGHT_ALIGNMENT);
+		out.setPreferredSize(preferred);
+		controls.add(out);
+		
+		controls.add(Box.createHorizontalStrut(15));
 		
 		return controls;
 	}
