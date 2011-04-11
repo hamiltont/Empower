@@ -7,6 +7,9 @@ import java.util.TimerTask;
 
 import javax.swing.SwingWorker;
 
+import org.jfree.data.time.Day;
+import org.jfree.data.time.Hour;
+import org.jfree.data.time.RegularTimePeriod;
 import org.turnerha.environment.MetricCalculator;
 
 /**
@@ -39,6 +42,8 @@ public class ModelController {
 
 	private boolean isUpdating = false;
 	private boolean isPaused = true;
+
+	private RegularTimePeriod currentSimulationHour = new Hour();
 
 	public static ModelController getInstance() {
 		return instance_;
@@ -74,6 +79,10 @@ public class ModelController {
 		String s = Integer.toString(mHeartbeatCount) + " hours";
 		Main.sHours.setText(s);
 		Main.sHours.invalidate();
+		currentSimulationHour = currentSimulationHour.next();
+		Main.sAccuracy.add(currentSimulationHour, Model.getInstance()
+				.getServer().getMetricCalculator().getAccuracy());
+		
 
 		if (isUpdating)
 			return;
@@ -118,9 +127,9 @@ public class ModelController {
 		@Override
 		protected Void doInBackground() {
 			try {
-								
+
 				Model.getInstance().update();
-				
+
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
