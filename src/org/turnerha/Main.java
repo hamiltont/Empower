@@ -13,6 +13,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -20,13 +22,16 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
@@ -60,9 +65,17 @@ public class Main {
 
 	// GUI elements that need to be read from
 	static int desiredNodeCount = DEFAULT_PHONE_COUNT;
+	static int policy_Collection_constant = 100;
+	static int policy_Collection_mobile = 0;
+	static int policy_Collection_random = 0;
 
 	// Useful for allowing dialog parent to be set properly
 	static JFrame sFrame;
+
+	// Useful for enabling/disabling components
+	// This list contains components that should only be enabled when the
+	// simulation is paused
+	static List<JComponent> enabledWhenPaused = new ArrayList<JComponent>(30);
 
 	public static void main(String[] args) {
 
@@ -266,9 +279,9 @@ public class Main {
 		metrics.setBorder(BorderFactory.createMatteBorder(2, 0, 0, 0,
 				Color.BLACK));
 		wrapper.add(metrics, BorderLayout.CENTER);
-		
+
 		metrics.addChangeListener(new ChangeListener() {
-			
+
 			@Override
 			public void stateChanged(ChangeEvent arg0) {
 				String title = metrics.getTitleAt(metrics.getSelectedIndex());
@@ -282,7 +295,7 @@ public class Main {
 					sAccuracy.setPaused(true);
 					sCoverage.setPaused(false);
 				}
-					
+
 			}
 		});
 
@@ -292,29 +305,28 @@ public class Main {
 	private static ChartPanel createBottom_accuracy() {
 
 		sAccuracy = new PausableTimeSeries("");
-		
+
 		TimeSeriesCollection dataset = new TimeSeriesCollection(sAccuracy);
 
-		JFreeChart c = ChartFactory.createTimeSeriesChart("Accuracy",
-				"", "Percent", dataset, false, false, false);
+		JFreeChart c = ChartFactory.createTimeSeriesChart("Accuracy", "",
+				"Percent", dataset, false, false, false);
 		c.setBackgroundPaint(new JPanel(false).getBackground());
 		ChartPanel cp = new ChartPanel(c);
 		return cp;
 	}
-	
+
 	private static ChartPanel createBottom_coverage() {
 
 		sCoverage = new PausableTimeSeries("");
-		
+
 		TimeSeriesCollection dataset = new TimeSeriesCollection(sCoverage);
 
-		JFreeChart c = ChartFactory.createTimeSeriesChart("Coverage",
-				"", "Percent", dataset, false, false, false);
+		JFreeChart c = ChartFactory.createTimeSeriesChart("Coverage", "",
+				"Percent", dataset, false, false, false);
 		c.setBackgroundPaint(new JPanel(false).getBackground());
 		ChartPanel cp = new ChartPanel(c);
 		return cp;
 	}
-
 
 	private static JPanel createBottom_controls() {
 		JPanel controls = new JPanel();
@@ -434,6 +446,7 @@ public class Main {
 		});
 		nc.add(num);
 		nc.add(Box.createHorizontalStrut(30));
+		enabledWhenPaused.add(num);
 
 		return nc;
 	}
@@ -487,6 +500,7 @@ public class Main {
 			}
 		});
 		kml_p.add(choose);
+		enabledWhenPaused.add(choose);
 
 		kml_p.add(Box.createHorizontalStrut(30));
 
@@ -545,6 +559,7 @@ public class Main {
 			}
 		});
 		kml_p.add(choose);
+		enabledWhenPaused.add(choose);
 
 		kml_p.add(Box.createHorizontalStrut(30));
 
@@ -555,52 +570,208 @@ public class Main {
 		JPanel policy = new JPanel();
 		policy.setLayout(new BoxLayout(policy, BoxLayout.PAGE_AXIS));
 
+		int left_padding = 10;
+		int right_padding = 10;
+
 		// TODO add all policies and add an 'edit' button to each
+		// TODO none of these have a minimum size set, which is ok as long as
+		// there is enough room in the left sidebar for all of the preferred
+		// sizes to fit. However, if we ever reach a scenario where they dont,
+		// then we will either need a scrollbar on the right, or we will need to
+		// set a minimum size on the components controlled by the boxlayout. The
+		// jpanel children of this JPanel also use boxlayouts, so the same todo
+		// applies to them
 		JPanel movement = new JPanel();
-		movement.setBorder(BorderFactory.createTitledBorder(BorderFactory
-				.createEtchedBorder(), "Node Movement"));
+		Border mBorder = BorderFactory.createCompoundBorder(BorderFactory
+				.createTitledBorder(BorderFactory.createEtchedBorder(),
+						"Node Movement"), BorderFactory.createEmptyBorder(0,
+				left_padding, 0, right_padding));
+		movement.setBorder(mBorder);
 		movement.setMaximumSize(new Dimension(Short.MAX_VALUE, movement
 				.getPreferredSize().height));
+		movement.setAlignmentX(Component.CENTER_ALIGNMENT);
 		policy.add(movement);
 
-		JPanel collection = new JPanel();
-		collection.setBorder(BorderFactory.createTitledBorder(BorderFactory
-				.createEtchedBorder(), "Data Collection"));
+		JPanel collection = createPolicy_collection();
+		Border cBorder = BorderFactory.createCompoundBorder(BorderFactory
+				.createTitledBorder(BorderFactory.createEtchedBorder(),
+						"Data Collection"), BorderFactory.createEmptyBorder(0,
+				left_padding, 0, right_padding));
+		collection.setBorder(cBorder);
 		collection.setMaximumSize(new Dimension(Short.MAX_VALUE, collection
 				.getPreferredSize().height));
+		collection.setAlignmentX(Component.CENTER_ALIGNMENT);
 		policy.add(collection);
 
 		JPanel reporting = new JPanel();
-		reporting.setBorder(BorderFactory.createTitledBorder(BorderFactory
-				.createEtchedBorder(), "Data Reporting"));
+		Border rBorder = BorderFactory.createCompoundBorder(BorderFactory
+				.createTitledBorder(BorderFactory.createEtchedBorder(),
+						"Data Reporting"), BorderFactory.createEmptyBorder(0,
+				left_padding, 0, right_padding));
+		reporting.setBorder(rBorder);
 		reporting.setMaximumSize(new Dimension(Short.MAX_VALUE, reporting
 				.getPreferredSize().height));
+		reporting.setAlignmentX(Component.CENTER_ALIGNMENT);
 		policy.add(reporting);
 
 		return policy;
+	}
+
+	private static JPanel createPolicy_collection() {
+		JPanel coll = new JPanel();
+		coll.setLayout(new BoxLayout(coll, BoxLayout.PAGE_AXIS));
+
+		JButton constDesc = null;
+		JButton constConfig = null;
+		JPanel constant = createPolicy_collectionOnePolicy("Constant",
+				constDesc, constConfig);
+		coll.add(constant);
+
+		JButton mobilDesc = null;
+		JButton mobilConfig = null;
+		JPanel mobile = createPolicy_collectionOnePolicy("Mobility", mobilDesc,
+				mobilConfig);
+
+		coll.add(mobile);
+
+		JButton randDesc = null;
+		JButton randConfig = null;
+		JPanel random = createPolicy_collectionOnePolicy("Probabilistic",
+				randDesc, randConfig);
+
+		coll.add(random);
+
+		return coll;
+	}
+
+	private static CaretListener collection_policyCaretListener = new CaretListener() {
+
+		@Override
+		public void caretUpdate(CaretEvent e) {
+			JTextField src = (JTextField) e.getSource();
+
+			if (src.getText().length() == 0)
+				return;
+
+			int val;
+			try {
+				val = Integer.parseInt(src.getText().trim());
+			} catch (NumberFormatException nfe) {
+				if (false == src.getText().endsWith("%")) {
+					src.setForeground(Color.RED);
+					return;
+				}
+
+				try {
+					String text = src.getText().substring(0,
+							src.getText().length() - 1).trim();
+					val = Integer.parseInt(text);
+				} catch (NumberFormatException nfe2) {
+					src.setForeground(Color.RED);
+					return;
+				}
+			}
+			System.out.println(val);
+
+			src.setForeground(Color.BLACK);
+
+			String name = src.getName();
+			if (name.equals("Probabilistic"))
+				policy_Collection_random = val;
+			else if (name.equals("Constant"))
+				policy_Collection_constant = val;
+			else if (name.equals("Mobility"))
+				policy_Collection_mobile = val;
+			else
+				// TODO Show a box or something?
+				System.err.println("Unknown Text Field with name '" + name
+						+ "'");
+
+		}
+	};
+
+	private static JPanel createPolicy_collectionOnePolicy(String title,
+			JButton outQuestion, JButton outConfig) {
+
+		// TODO find a better method of forcing button size
+		Dimension buttonPref = new Dimension(20, 16);
+
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+		panel.add(new JLabel(title));
+		panel.add(Box.createHorizontalGlue());
+		JTextField textField = new JTextField("0 %", 5);
+		if (title.equals("Constant"))
+			textField.setText("100 %");
+		textField.setName(title);
+		textField.addCaretListener(collection_policyCaretListener);
+		textField.setHorizontalAlignment(JTextField.TRAILING);
+		textField.setMaximumSize(textField.getPreferredSize());
+		panel.add(textField);
+		enabledWhenPaused.add(textField);
+		panel.add(Box.createHorizontalStrut(10));
+		outQuestion = new JButton("?");
+		outQuestion.setPreferredSize(buttonPref);
+		outQuestion.setMaximumSize(buttonPref);
+		outQuestion.setMaximumSize(buttonPref);
+		panel.add(outQuestion);
+		panel.add(Box.createHorizontalStrut(3));
+		JButton edit = new JButton("e");
+		edit.setPreferredSize(buttonPref);
+		edit.setMaximumSize(buttonPref);
+		edit.setMinimumSize(buttonPref);
+		panel.add(edit);
+		enabledWhenPaused.add(edit);
+
+		return panel;
 	}
 
 	private static JPanel createControl() {
 		JPanel control = new JPanel();
 		control.setLayout(new BoxLayout(control, BoxLayout.LINE_AXIS));
 
-		JButton play = new JButton(new ImageIcon("images/play-normal.png"));
+		final JButton play = new JButton(
+				new ImageIcon("images/play-normal.png"));
+		final JButton pause = new JButton(new ImageIcon("images/pause-hot.png"));
+
 		play.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				if (policy_Collection_constant + policy_Collection_mobile
+						+ policy_Collection_random != 100) {
+					JOptionPane
+							.showMessageDialog(
+									sFrame,
+									"Data collection policy percentages do not add up to "
+											+ "\n100 %, we cannot start the simulation");
+					return;
+				}
+
 				Model.getInstance().updateNodeCount(desiredNodeCount);
 				ModelController.getInstance().start();
+
+				pause.setEnabled(true);
+				play.setEnabled(false);
+
+				for (JComponent c : enabledWhenPaused)
+					c.setEnabled(false);
 			}
 		});
 		control.add(play);
 
-		JButton pause = new JButton(new ImageIcon("images/pause-hot.png"));
 		pause.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				ModelController.getInstance().pause();
+
+				pause.setEnabled(false);
+				play.setEnabled(true);
+				
+				for (JComponent c : enabledWhenPaused)
+					c.setEnabled(true);
 			}
 		});
+		pause.setEnabled(false);
 		control.add(pause);
 
 		control.add(Box.createHorizontalGlue());
