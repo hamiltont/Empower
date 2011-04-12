@@ -134,7 +134,7 @@ public class Main {
 		 * r.nextInt(screen.height); } while (false == kmlGeography.contains(x,
 		 * y));
 		 * 
-		 * nodes.add(new SmartPhone(new Point(x, y), reader.getPoly(), mServer,
+		 * nodes.add(new DefaultSensorNode(new Point(x, y), reader.getPoly(), mServer,
 		 * rn, rando, policy, mPolicy, generator)); }
 		 * 
 		 * // Build the model from the sensor nodes Model model = new

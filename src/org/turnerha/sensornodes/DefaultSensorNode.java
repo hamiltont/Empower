@@ -11,7 +11,22 @@ import org.turnerha.geography.Projection;
 import org.turnerha.policys.collection.DataCollectionPolicy;
 import org.turnerha.policys.movement.NodeMovementPolicy;
 
-public class SmartPhone implements SensorNode {
+/**
+ * Represents a node where the policy decisions control every aspect of the
+ * node. Used for any nodes that can have any combination of policy behaviors.
+ * If a node needs to ensure that certain policies are always used in
+ * conjunction then a new class should be created. It can either be a complete
+ * new class that implements {@link SensorNode}, or can subclass
+ * {@link DefaultSensorNode}.
+ * 
+ * Such an example is the {@link FixedSecureNode}, which requires that a no
+ * movement policy and a low sensor error rate policy are always used in
+ * conjunction
+ * 
+ * @author hamiltont
+ * 
+ */
+public class DefaultSensorNode implements SensorNode {
 
 	private GeoLocation mLocation;
 	private Random mRandom;
@@ -19,7 +34,7 @@ public class SmartPhone implements SensorNode {
 	private DataCollectionPolicy mDataCollectionPolicy;
 	private NodeMovementPolicy mMovementPolicy;
 
-	public SmartPhone(GeoLocation loc, DataCollectionPolicy dataPolicy,
+	public DefaultSensorNode(GeoLocation loc, DataCollectionPolicy dataPolicy,
 			NodeMovementPolicy movementPolicy, Random generator) {
 		mLocation = loc;
 		mDataCollectionPolicy = dataPolicy;
@@ -32,7 +47,7 @@ public class SmartPhone implements SensorNode {
 	 * collection, data reporting, etc
 	 */
 	public void update() {
-		
+
 		if (mMovementPolicy.shouldMove(this)) {
 			double xChange = mRandom.nextDouble() / 10d;
 			double yChange = mRandom.nextDouble() / 10d;
@@ -63,8 +78,8 @@ public class SmartPhone implements SensorNode {
 					mLocation.lat -= yChange;
 				else
 					mLocation.lat += yChange;
-			}			
-			
+			}
+
 		}
 
 		// Move complete. Should we collect data?

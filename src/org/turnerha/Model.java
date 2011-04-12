@@ -17,7 +17,7 @@ import org.turnerha.geography.Projection;
 import org.turnerha.policys.collection.ConstantDataCollection;
 import org.turnerha.policys.movement.ProbabilisticMovementPolicy;
 import org.turnerha.sensornodes.SensorNode;
-import org.turnerha.sensornodes.SmartPhone;
+import org.turnerha.sensornodes.DefaultSensorNode;
 import org.turnerha.server.Server;
 
 /**
@@ -145,7 +145,7 @@ public class Model {
 							+ bounds.y));
 				} while (false == getKml().contains(loc));
 
-				SmartPhone s = new SmartPhone(loc,
+				DefaultSensorNode s = new DefaultSensorNode(loc,
 						new ConstantDataCollection(),
 						new ProbabilisticMovementPolicy(1, new Random()),
 						new Random());

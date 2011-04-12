@@ -8,6 +8,12 @@ import org.turnerha.geography.Projection;
 import org.turnerha.policys.collection.DataCollectionPolicy;
 import org.turnerha.policys.movement.NodeMovementPolicy;
 
+/**
+ * Interface for any sort of generic node. 
+ * 
+ * @author hamiltont
+ *
+ */
 public interface SensorNode {
 
 	/**
