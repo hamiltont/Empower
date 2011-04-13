@@ -1,4 +1,7 @@
 bin/*
 
+# Just for now, because this is the default name of the output log file
+log.csv
+
 # For mac users only
 .DS_Store
