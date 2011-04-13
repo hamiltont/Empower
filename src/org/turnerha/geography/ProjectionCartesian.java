@@ -104,5 +104,29 @@ public class ProjectionCartesian implements Projection {
 
 		return new Point(x, y);
 	}
+	
+	public void zoomIn() {
+		
+	}
+	
+	public void zoomOut() {
+		
+	}
+	
+	public void panLeft() {
+		
+	}
+	
+	public void panRight() {
+		
+	}
+	
+	public void panUp() {
+		
+	}
+	
+	public void panDown() {
+		
+	}
 
 }
