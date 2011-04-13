@@ -16,7 +16,6 @@ import java.util.HashMap;
 import org.turnerha.Model;
 import org.turnerha.ModelView;
 import org.turnerha.Util;
-import org.turnerha.environment.MetricCalculator;
 import org.turnerha.environment.PerceivedEnvironment;
 import org.turnerha.environment.utils.BlendComposite;
 import org.turnerha.environment.utils.EnvironUtils;
@@ -24,6 +23,7 @@ import org.turnerha.geography.GeoBox;
 import org.turnerha.geography.GeoLocation;
 import org.turnerha.geography.Projection;
 import org.turnerha.geography.ProjectionCartesian;
+import org.turnerha.metrics.MetricCalculator;
 
 public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	BufferedImage mNetwork;
@@ -47,17 +47,26 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 		mNetwork = createCompatibleTranslucentImage(size.width, size.height);
 	}
 
+	Point[] affectedPoints = new Point[5 * 5];
+
 	@Override
 	public void addReading(int value, GeoLocation loc) {
+		if (affectedPoints[0] == null) {
+			int pos = -1;
+			for (int x = 0; x < 5; x++)
+				for (int y = 0; y < 5; y++)
+					affectedPoints[++pos] = new Point(0, 0);
+		}
 
 		Point p = ModelView.getInstance().getProjection().getPointAt(loc);
 
 		// Let the metric calculator remove the effect due to p
-		Point[] affectedPoints = new Point[5 * 5];
-		int pos = 0;
+		int pos = -1;
 		for (int x = p.x - 2; x < p.x + 3; x++)
-			for (int y = p.y - 2; y < p.y + 3; y++)
-				affectedPoints[pos++] = new Point(x, y);
+			for (int y = p.y - 2; y < p.y + 3; y++) {
+				affectedPoints[++pos].x = x;
+				affectedPoints[pos].y = y;
+			}
 		mMetricCalc.preNewReading(affectedPoints);
 
 		BufferedImage mReading = mReadingCircles.get(new Integer(value));
@@ -105,7 +114,8 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 		int w = mNetwork.getWidth();
 		int h = mNetwork.getHeight();
 
-		return ModelView.getInstance().getProjection().getGeoBoxOf(new Rectangle(w, h));
+		return ModelView.getInstance().getProjection().getGeoBoxOf(
+				new Rectangle(w, h));
 	}
 
 	@Override

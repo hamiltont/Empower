@@ -1,9 +1,9 @@
 package org.turnerha.server;
 
-import org.turnerha.environment.MetricCalculator;
 import org.turnerha.environment.PerceivedEnvironment;
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
 import org.turnerha.geography.GeoLocation;
+import org.turnerha.metrics.MetricCalculator;
 
 /**
  * Controls access to the perceived network, drives the {@link MetricCalculator}

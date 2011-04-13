@@ -10,7 +10,7 @@ import javax.swing.SwingWorker;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.Hour;
 import org.jfree.data.time.RegularTimePeriod;
-import org.turnerha.environment.MetricCalculator;
+import org.turnerha.metrics.MetricCalculator;
 
 /**
  * Controls the interactions b/w the Model and the ModelView, and does some

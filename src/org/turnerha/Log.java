@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import org.turnerha.environment.MetricCalculator;
+import org.turnerha.metrics.MetricCalculator;
 
 /**
  * This class is a central location for reporting the results of a simulation.

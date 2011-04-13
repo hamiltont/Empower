@@ -1,10 +1,12 @@
-package org.turnerha.environment;
+package org.turnerha.metrics;
 
 import java.awt.Point;
 import java.awt.Rectangle;
 
 import org.turnerha.Log;
 import org.turnerha.Model;
+import org.turnerha.environment.PerceivedEnvironment;
+import org.turnerha.environment.RealEnvironment;
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
 import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 import org.turnerha.geography.KmlGeography;
@@ -144,10 +146,6 @@ public class MetricCalculator {
 	 * 
 	 * @param affectedPixels
 	 */
-	// TODO - Point[] is a pretty poor way of passing in the points. We allocate
-	// a ton of new point objects, which are then just converted back into x/y.
-	// Why not just allocate the x/y array (or better yet, pass in the top left
-	// x/y and the w/h)
 	public void preNewReading(Point[] affectedPixels) {
 		for (Point p : affectedPixels) {
 			int percPixel = mPerceived.getRGB(p.x, p.y);
