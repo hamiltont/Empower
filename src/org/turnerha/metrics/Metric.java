@@ -34,6 +34,12 @@ public interface Metric {
 	 *            The {@link Point}s in the environment that will be affected by
 	 *            the new reading. These {@link Point}s should be calculated by
 	 *            using the default projection, not the current projection
+	 * 
+	 *            TODO - Currently some of the passed affectedPixels are *not*
+	 *            actually contained in the KML geography. The MetricRunner
+	 *            should ensure that each affectedPixel is actually contained
+	 *            before passing it. This current error causes the coverage and
+	 *            accuracy metrics to not peak at 1, but rather around 1.12...
 	 */
 	public void preNewReading(Point[] affectedPixels);
 
