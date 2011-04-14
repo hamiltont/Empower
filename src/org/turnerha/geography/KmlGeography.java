@@ -4,12 +4,15 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
-import java.awt.Polygon;
 import java.awt.Rectangle;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.turnerha.ModelView;
+
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.Polygon;
 
 /**
  * Allows a kml-based geography file to be painted to the screen. There should
@@ -22,7 +25,8 @@ import org.turnerha.ModelView;
 // TODO Add an applyProjection(Projection p) method
 public class KmlGeography {
 
-	private List<MyPolygon> mPolys;
+	private List<Polygon> mPolys;
+	private Geometry union;
 
 	private GeoLocation topRight = new GeoLocation(39.520992, -74.421386);
 	private GeoLocation botLeft = new GeoLocation(36.509636, -83.913574);
@@ -36,14 +40,7 @@ public class KmlGeography {
 	public KmlGeography() {
 	}
 
-	/**
-	 * 
-	 * @param polys
-	 * @param screen
-	 * @param tr
-	 * @param bl
-	 */
-	public void init(List<MyPolygon> polys, GeoLocation tr, GeoLocation bl) {
+	public void init(List<Polygon> polys, GeoLocation tr, GeoLocation bl) {
 
 		topRight = tr;
 		botLeft = bl;
@@ -61,37 +58,37 @@ public class KmlGeography {
 
 		mPolys = polys;
 
-		for (MyPolygon poly : polys) {
-			poly.mPoints = new ArrayList<Point>(poly.mLocations.size());
-			int[] xArray = new int[poly.mLocations.size()];
-			int[] yArray = new int[poly.mLocations.size()];
+		Geometry union = new Polygon(null, null, new GeometryFactory());
+		for (Polygon p : polys)
+			union = union.union(p);
 
-			int pos = 0;
-			for (GeoLocation dp : poly.mLocations) {
-
-				// Remove the base, and then multiple by pixels per latitude
-				double yFloat = (dp.lat - botLeft.lat)
-						* (double) (mPixelHeight) / latDifference;
-
-				int y = (int) Math.round(yFloat);
-				// Flip to align coordinate systems
-				y = mPixelHeight - y;
-
-				// Remove the base, and then multiple by pixels per latitude
-				double xFloat = (dp.lon - botLeft.lon) * (double) (mPixelWidth)
-						/ lonDifference;
-
-				int x = -1 * (int) Math.round(xFloat);
-
-				xArray[pos] = x;
-				yArray[pos] = y;
-
-				poly.mPoints.add(new Point(x, y));
-				pos++;
-
-			}
-			poly.mPoly = new Polygon(xArray, yArray, xArray.length);
-		}
+		/*
+		 * for (MyPolygon poly : polys) { poly.mPoints = new
+		 * ArrayList<Point>(poly.mLocations.size()); int[] xArray = new
+		 * int[poly.mLocations.size()]; int[] yArray = new
+		 * int[poly.mLocations.size()];
+		 * 
+		 * int pos = 0; for (GeoLocation dp : poly.mLocations) {
+		 * 
+		 * // Remove the base, and then multiple by pixels per latitude double
+		 * yFloat = (dp.lat - botLeft.lat) (double) (mPixelHeight) /
+		 * latDifference;
+		 * 
+		 * int y = (int) Math.round(yFloat); // Flip to align coordinate systems
+		 * y = mPixelHeight - y;
+		 * 
+		 * // Remove the base, and then multiple by pixels per latitude double
+		 * xFloat = (dp.lon - botLeft.lon) * (double) (mPixelWidth) /
+		 * lonDifference;
+		 * 
+		 * int x = -1 * (int) Math.round(xFloat);
+		 * 
+		 * xArray[pos] = x; yArray[pos] = y;
+		 * 
+		 * poly.mPoints.add(new Point(x, y)); pos++;
+		 * 
+		 * } //poly.mPoly = new
+		 */
 	}
 
 	private Color seeThruBlack = new Color(0, 0, 0, 50);
@@ -101,46 +98,37 @@ public class KmlGeography {
 
 		// TODO holy mother of dear god optimize this
 		Projection mainP = ModelView.getInstance().getDefaultProjection();
-		for (MyPolygon poly : mPolys) {
-			for (int i = 0; i < poly.mPoints.size() - 1; i++) {
-				Point a = poly.mPoints.get(i);
-				Point b = poly.mPoints.get(i + 1);
-				GeoLocation al = mainP.getLocationAt(a);
-				GeoLocation b1 = mainP.getLocationAt(b);
-				Point r1 = p.getPointAt(al);
-				Point r2 = p.getPointAt(b1);
-				g.drawLine(r1.x, r1.y, r2.x, r2.y);
+		for (Polygon poly : mPolys) {
+			for (Coordinate c : poly.getCoordinates()) {
+				// TODO if this starts working, then I have to draw all of the
+				// lines
+				Point pnt = p.getPointAt(new GeoLocation(c.x, c.y));
+				g.drawLine(pnt.x, pnt.y, pnt.x, pnt.y);
 			}
+
+			/*
+			 * for (int i = 0; i < poly.mPoints.size() - 1; i++) { Point a =
+			 * poly.mPoints.get(i); Point b = poly.mPoints.get(i + 1);
+			 * GeoLocation al = mainP.getLocationAt(a); GeoLocation b1 =
+			 * mainP.getLocationAt(b); Point r1 = p.getPointAt(al); Point r2 =
+			 * p.getPointAt(b1); g.drawLine(r1.x, r1.y, r2.x, r2.y); }
+			 */
 
 		}
 
 	}
 
-	/**
-	 * Returns true if the pixel is contained within the polygons present on
-	 * this map, false otherwise
-	 */
-	private Polygon lastPoly = null;
-
 	public boolean contains(GeoLocation point) {
-		Point p = ModelView.getInstance().getDefaultProjection().getPointAt(
-				point);
-		return contains(p.x, p.y);
+		com.vividsolutions.jts.geom.Point p = (new GeometryFactory())
+				.createPoint(new Coordinate(point.lon, point.lat));
+
+		return union.contains(p);
 	}
 
 	public boolean contains(int x, int y) {
-		if (lastPoly != null)
-			if (lastPoly.contains(x, y))
-				return true;
-
-		for (MyPolygon poly : mPolys) {
-			Polygon javaPoly = poly.mPoly;
-			if (javaPoly.contains(x, y)) {
-				lastPoly = javaPoly;
-				return true;
-			}
-		}
-		return false;
+		GeoLocation p = ModelView.getInstance().getDefaultProjection()
+				.getLocationAt(new Point(x, y));
+		return contains(p);
 	}
 
 	public GeoBox getGeoBox() {
@@ -148,13 +136,14 @@ public class KmlGeography {
 	}
 
 	public Rectangle getPixelSize() {
-		Rectangle totalUnion = null;
-		for (MyPolygon poly : mPolys)
+		Rectangle totalUnion = new Rectangle(5, 5);
+		// TODO implement this if everything works
+		/*for (MyPolygon poly : mPolys)
 			if (totalUnion == null)
 				totalUnion = new Rectangle(poly.mPoly.getBounds());
 			else
 				totalUnion = totalUnion.union(poly.mPoly.getBounds());
-
+*/
 		return totalUnion;
 	}
 }

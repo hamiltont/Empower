@@ -13,18 +13,26 @@ import com.keithpower.gekmlib.Feature;
 import com.keithpower.gekmlib.KMLParser;
 import com.keithpower.gekmlib.Kml;
 import com.keithpower.gekmlib.Placemark;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.CoordinateSequence;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.LinearRing;
+import com.vividsolutions.jts.geom.Polygon;
+import com.vividsolutions.jts.geom.impl.CoordinateArraySequence;
 
+// TODO At some point, I could convert this to a GMLReader and use a library like JTS to do all of the reading / entering
 public class KmlReader {
 
-	private List<MyPolygon> mPoly;
+	private List<Polygon> mPolyList;
 	public GeoLocation mTopRight;
 	public GeoLocation mBottomLeft;
 
-	public List<MyPolygon> getPoly() {
-		return mPoly;
+	public List<Polygon> getPoly() {
+		return mPolyList;
 	}
-	
-	public KmlReader() {}
+
+	public KmlReader() {
+	}
 
 	/**
 	 * 
@@ -46,47 +54,82 @@ public class KmlReader {
 			Document d = kml.getDocument();
 			Feature[] features = d.getFeatures();
 
-			mPoly = new ArrayList<MyPolygon>(features.length);
+			mPolyList = new ArrayList<Polygon>(features.length);
 
+			// Iterate over all features
+			ArrayList<Coordinate> tempCoordinateStorage = new ArrayList<Coordinate>();
 			for (Feature f : features) {
 				Placemark p = (Placemark) f;
 
+				// Parse the outer boundary first
 				double[] coords = p.getPolygon().getOuterBoundaryIs()
 						.getLinearRing().getNumericalCoordinates();
 
-				MyPolygon poly = new MyPolygon();
-				ArrayList<GeoLocation> polyPoints = new ArrayList<GeoLocation>(
-						Math.round((float) coords.length * 0.666666f));
-
+				tempCoordinateStorage.clear();
 				for (int i = 0; i < coords.length; i = i + 3) {
 
-					GeoLocation dp = new GeoLocation();
-					dp.lon = coords[i];
-					dp.lat = coords[i + 1];
+					double lon = coords[i];
+					double lat = coords[i + 1];
 
 					if (topRight == null) {
-						topRight = new GeoLocation(dp.lat, dp.lon);
-						bottomLeft = new GeoLocation(dp.lat, dp.lon);
+						topRight = new GeoLocation(lat, lon);
+						bottomLeft = new GeoLocation(lat, lon);
 					}
 
-					if (dp.lat > topRight.lat)
-						topRight.lat = dp.lat;
-					if (dp.lat < bottomLeft.lat)
-						bottomLeft.lat = dp.lat;
+					if (lat > topRight.lat)
+						topRight.lat = lat;
+					if (lat < bottomLeft.lat)
+						bottomLeft.lat = lat;
 
-					if (dp.lon > topRight.lon)
-						topRight.lon = dp.lon;
-					if (dp.lon < bottomLeft.lon)
-						bottomLeft.lon = dp.lon;
+					if (lon > topRight.lon)
+						topRight.lon = lon;
+					if (lon < bottomLeft.lon)
+						bottomLeft.lon = lon;
 
-					polyPoints.add(dp);
+					Coordinate c = new Coordinate(lon, lat);
+					tempCoordinateStorage.add(c);
 				}
 
-				poly.mLocations = polyPoints;
-				mPoly.add(poly);
+				// TODO fix this...
+				Coordinate[] obCoords = new Coordinate[tempCoordinateStorage
+						.size()];
+				int j = 0;
+				for (Coordinate c : tempCoordinateStorage)
+					obCoords[j++] = c;
+				CoordinateSequence obSequence = new CoordinateArraySequence(
+						obCoords);
+				LinearRing obRing = new LinearRing(obSequence,
+						new GeometryFactory());
+
+				// Now parse the inner boundary
+				tempCoordinateStorage.clear();
+				LinearRing ibRing = null;
+				if (p.getPolygon().getInnerBoundaryIs() != null) {
+					coords = p.getPolygon().getInnerBoundaryIs()
+							.getLinearRing().getNumericalCoordinates();
+					for (int i = 0; i < coords.length; i = i + 3) {
+						double lon = coords[i];
+						double lat = coords[i + 1];
+						tempCoordinateStorage.add(new Coordinate(lon, lat));
+					}
+					// TODO fix this...
+					Coordinate[] ibCoords = new Coordinate[tempCoordinateStorage
+							.size()];
+					int k = 0;
+					for (Coordinate c : tempCoordinateStorage)
+						ibCoords[k++] = c;
+					CoordinateSequence ibSequence = new CoordinateArraySequence(
+							ibCoords);
+					ibRing = new LinearRing(ibSequence, new GeometryFactory());
+				}
+
+				// Finally build the polygon
+				Polygon poly = new Polygon(obRing, ibRing == null ? null
+						: new LinearRing[] { ibRing }, new GeometryFactory());
+
+				mPolyList.add(poly);
 			}
-			
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 			return false;
@@ -94,20 +137,20 @@ public class KmlReader {
 			e.printStackTrace();
 			return false;
 		}
-		
+
 		double margin = .5d;
-		
+
 		// Add Horiz Margins
 		bottomLeft.lon -= margin;
 		topRight.lon += margin;
-		
+
 		// Add Vert margins
 		bottomLeft.lat -= margin;
 		topRight.lat += margin;
-		
+
 		mTopRight = topRight;
 		mBottomLeft = bottomLeft;
-		
+
 		return true;
 	}
 }
