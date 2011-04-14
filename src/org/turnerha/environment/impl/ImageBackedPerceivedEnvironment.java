@@ -22,8 +22,6 @@ import org.turnerha.environment.utils.EnvironUtils;
 import org.turnerha.geography.GeoBox;
 import org.turnerha.geography.GeoLocation;
 import org.turnerha.geography.Projection;
-import org.turnerha.geography.ProjectionCartesian;
-import org.turnerha.metrics.MetricCalculator;
 
 public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	BufferedImage mNetwork;
@@ -36,12 +34,8 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 	 */
 	private int mReadings = 0;
 
-	private MetricCalculator mMetricCalc;
-
-	public ImageBackedPerceivedEnvironment(MetricCalculator mc) {
+	public ImageBackedPerceivedEnvironment() {
 		Dimension size = Util.getRenderingAreaSize();
-
-		mMetricCalc = mc;
 
 		// Setup Perceived Network Image
 		mNetwork = createCompatibleTranslucentImage(size.width, size.height);
@@ -67,7 +61,8 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 				affectedPoints[++pos].x = x;
 				affectedPoints[pos].y = y;
 			}
-		mMetricCalc.preNewReading(affectedPoints);
+		Model.getInstance().getServer().getMetricCalculator().preNewReading(affectedPoints);
+		
 
 		BufferedImage mReading = mReadingCircles.get(new Integer(value));
 
@@ -85,7 +80,7 @@ public class ImageBackedPerceivedEnvironment implements PerceivedEnvironment {
 		mReadings++;
 
 		// Let the metric calculator add back in the effect due to p
-		mMetricCalc.postNewReading(affectedPoints);
+		Model.getInstance().getServer().getMetricCalculator().postNewReading(affectedPoints);
 	}
 
 	@Override

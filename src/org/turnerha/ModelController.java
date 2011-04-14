@@ -31,7 +31,6 @@ import org.turnerha.metrics.MetricCalculator;
  * 
  */
 public class ModelController {
-	private MetricCalculator mMetricCalc;
 	private int mHeartbeatCount = 0;
 
 	private HashMap<Integer, File> mRealEnvironMap;
@@ -52,7 +51,6 @@ public class ModelController {
 	public ModelController(ModelView view) {
 		instance_ = this;
 		mModelView = view;
-		mMetricCalc = Model.getInstance().getServer().getMetricCalculator();
 	}
 
 	public void setDynamicEnvironmentMap(HashMap<Integer, File> environments) {
@@ -80,11 +78,10 @@ public class ModelController {
 		Main.sHours.setText(s);
 		Main.sHours.invalidate();
 		currentSimulationHour = currentSimulationHour.next();
-		MetricCalculator mc = Model.getInstance().getServer().getMetricCalculator();
+		MetricCalculator mc = Model.getInstance().getServer()
+				.getMetricCalculator();
 		Main.sAccuracy.add(currentSimulationHour, mc.getAccuracy());
 		Main.sCoverage.add(currentSimulationHour, mc.getCoverage());
-		
-		
 
 		if (isUpdating)
 			return;
@@ -154,14 +151,16 @@ public class ModelController {
 				if (mRealEnvironMap.containsKey(new Integer(mHeartbeatCount))) {
 					mModel.getRealEnvironment().loadNewEnvironment(
 							mRealEnvironMap.get(new Integer(mHeartbeatCount)));
-					mMetricCalc.updateRealEnvironment(mModel
-							.getRealEnvironment());
+					Model.getInstance().getServer().getMetricCalculator()
+							.updateRealEnvironment(mModel.getRealEnvironment());
 				}
 
 			// Reset the usefulness measures so they are calculated on a
 			// per-heartbeat basis
-			mMetricCalc.resetUselessReadingCounts();
-			mMetricCalc.resetTotalReadingCount();
+			Model.getInstance().getServer().getMetricCalculator()
+					.resetUselessReadingCounts();
+			Model.getInstance().getServer().getMetricCalculator()
+					.resetTotalReadingCount();
 			// mMetricCalc.resetUsefulnessPerReading();
 
 			isUpdating = false;

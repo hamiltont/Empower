@@ -16,20 +16,20 @@ public class Server {
 	MetricCalculator mMetricCalculator;
 
 	public Server() {
-		mMetricCalculator = new MetricCalculator();
 
-		mPerceivedEnv = new ImageBackedPerceivedEnvironment(mMetricCalculator);
-		
-		mMetricCalculator.updatePerceivedEnvironment(mPerceivedEnv);
+		mPerceivedEnv = new ImageBackedPerceivedEnvironment();
+
 	}
 
 	public PerceivedEnvironment getPerceivedEnvironment() {
 		return mPerceivedEnv;
 	}
-	
+
 	public MetricCalculator getMetricCalculator() {
-		if (mMetricCalculator == null)
+		if (mMetricCalculator == null) {
 			mMetricCalculator = new MetricCalculator();
+			mMetricCalculator.updatePerceivedEnvironment(mPerceivedEnv);
+		}
 		return mMetricCalculator;
 	}
 

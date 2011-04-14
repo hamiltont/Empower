@@ -26,7 +26,7 @@ import com.vividsolutions.jts.geom.Polygon;
 public class KmlGeography {
 
 	private List<Polygon> mPolys;
-	private Geometry union;
+	private Geometry mUnion;
 
 	private GeoLocation topRight = new GeoLocation(39.520992, -74.421386);
 	private GeoLocation botLeft = new GeoLocation(36.509636, -83.913574);
@@ -61,6 +61,7 @@ public class KmlGeography {
 		Geometry union = new Polygon(null, null, new GeometryFactory());
 		for (Polygon p : polys)
 			union = union.union(p);
+		mUnion = union;
 
 		/*
 		 * for (MyPolygon poly : polys) { poly.mPoints = new
@@ -99,20 +100,18 @@ public class KmlGeography {
 		// TODO holy mother of dear god optimize this
 		Projection mainP = ModelView.getInstance().getDefaultProjection();
 		for (Polygon poly : mPolys) {
-			for (Coordinate c : poly.getCoordinates()) {
-				// TODO if this starts working, then I have to draw all of the
-				// lines
-				Point pnt = p.getPointAt(new GeoLocation(c.x, c.y));
-				g.drawLine(pnt.x, pnt.y, pnt.x, pnt.y);
+			{
+				Coordinate[] coords = poly.getCoordinates();
+				for (int i = 0; i < coords.length; i++) {
+					Coordinate a = coords[i];
+					int indexb = (i + 1 == coords.length) ? 0 : i + 1;
+					Coordinate b = coords[indexb];
+					
+					Point pa = mainP.getPointAt(new GeoLocation(a.y, a.x));
+					Point pb = mainP.getPointAt(new GeoLocation(b.y, b.x));
+					g.drawLine(pa.x, pa.y, pb.x, pb.y);
+				}
 			}
-
-			/*
-			 * for (int i = 0; i < poly.mPoints.size() - 1; i++) { Point a =
-			 * poly.mPoints.get(i); Point b = poly.mPoints.get(i + 1);
-			 * GeoLocation al = mainP.getLocationAt(a); GeoLocation b1 =
-			 * mainP.getLocationAt(b); Point r1 = p.getPointAt(al); Point r2 =
-			 * p.getPointAt(b1); g.drawLine(r1.x, r1.y, r2.x, r2.y); }
-			 */
 
 		}
 
@@ -122,7 +121,7 @@ public class KmlGeography {
 		com.vividsolutions.jts.geom.Point p = (new GeometryFactory())
 				.createPoint(new Coordinate(point.lon, point.lat));
 
-		return union.contains(p);
+		return mUnion.contains(p);
 	}
 
 	public boolean contains(int x, int y) {
@@ -138,12 +137,11 @@ public class KmlGeography {
 	public Rectangle getPixelSize() {
 		Rectangle totalUnion = new Rectangle(5, 5);
 		// TODO implement this if everything works
-		/*for (MyPolygon poly : mPolys)
-			if (totalUnion == null)
-				totalUnion = new Rectangle(poly.mPoly.getBounds());
-			else
-				totalUnion = totalUnion.union(poly.mPoly.getBounds());
-*/
+		/*
+		 * for (MyPolygon poly : mPolys) if (totalUnion == null) totalUnion =
+		 * new Rectangle(poly.mPoly.getBounds()); else totalUnion =
+		 * totalUnion.union(poly.mPoly.getBounds());
+		 */
 		return totalUnion;
 	}
 }
