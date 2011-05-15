@@ -1,15 +1,18 @@
 package org.turnerha.metrics;
 
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 
 import org.turnerha.Log;
 import org.turnerha.Model;
+import org.turnerha.ModelView;
 import org.turnerha.environment.PerceivedEnvironment;
 import org.turnerha.environment.RealEnvironment;
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
 import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 import org.turnerha.geography.KmlGeography;
+import org.turnerha.geography.Projection;
 
 public class MetricCalculator {
 
@@ -49,13 +52,20 @@ public class MetricCalculator {
 	private boolean mThisIsFirstEnvironment = true;
 
 	public MetricCalculator() {
-		KmlGeography geo = Model.getInstance().getKml();
 
-		// Determine the total possible coverage
-		Rectangle geoSize = geo.getPixelSize();
-		for (int x = geoSize.x; x < (geoSize.width + geoSize.x); x++)
-			for (int y = geoSize.y; y < (geoSize.height + geoSize.y); y++)
-				if (geo.contains(x, y))
+		ImageBackedRealEnvironment real = (ImageBackedRealEnvironment) Model
+				.getInstance().getRealEnvironment();
+
+		KmlGeography geo = Model.getInstance().getKml();
+		Projection defaultRenderingProjection = ModelView.getInstance()
+				.getDefaultProjection();
+
+		Dimension realSize = real.getPixelSize();
+		for (int x = 0; x < realSize.width; x++)
+			for (int y = 0; y < realSize.height; y++)
+				if (geo
+						.contains(defaultRenderingProjection
+								.getLocationAt(x, y)))
 					mCoverageTotal++;
 
 		new Log(this);
@@ -85,9 +95,10 @@ public class MetricCalculator {
 		// this real environment
 		Rectangle geoSize = kml.getPixelSize();
 		ImageBackedRealEnvironment ibre = (ImageBackedRealEnvironment) real;
+		Projection p = ModelView.getInstance().getDefaultProjection();
 		for (int x = geoSize.x; x < (geoSize.width + geoSize.x); x++)
 			for (int y = geoSize.y; y < (geoSize.height + geoSize.y); y++)
-				if (kml.contains(x, y)) {
+				if (kml.contains(p.getLocationAt(x, y))) {
 					int pixel = ibre.getValueAt(x, y);
 					int red = (pixel >> 16) & 0xff;
 					int green = (pixel >> 8) & 0xff;
@@ -118,7 +129,7 @@ public class MetricCalculator {
 			Rectangle s = kml.getPixelSize();
 			for (int x = s.x; x < s.x + s.width; x++)
 				for (int y = s.y; y < s.y + s.height; y++) {
-					if (kml.contains(x, y) == false)
+					if (kml.contains(p.getLocationAt(x, y)) == false)
 						continue;
 
 					int perc = mPerceived.getRGB(x, y);

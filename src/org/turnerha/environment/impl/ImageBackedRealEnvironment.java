@@ -47,11 +47,13 @@ public class ImageBackedRealEnvironment implements RealEnvironment {
 	 *            the realEnviron will be matched to this color scheme as best
 	 *            as possible
 	 */
-	public ImageBackedRealEnvironment(File realEnvironmentFile, Dimension size, float alpha, KmlGeography kmlGeography) {
+	public ImageBackedRealEnvironment(File realEnvironmentFile, Dimension size,
+			float alpha, KmlGeography kmlGeography) {
 
 		mSize = size;
 
-		mProjection = (ProjectionCartesian) ModelView.getInstance().getProjection();
+		mProjection = (ProjectionCartesian) ModelView.getInstance()
+				.getProjection();
 
 		// Setup the alpha operation
 		float[] scales = { 1f, 1f, 1f, 0.5f };
@@ -90,9 +92,17 @@ public class ImageBackedRealEnvironment implements RealEnvironment {
 			KmlGeography kmlGeography) {
 
 		// Iterate over all pixels, check that they are within the polys
+		double total = (long) environment.getHeight()
+				* (long) environment.getWidth();
+		double current = 0;
+		Projection defaultP = ModelView.getInstance().getDefaultProjection();
+		long time = System.currentTimeMillis();
 		for (int x = 0; x < environment.getWidth(); x++)
 			for (int y = 0; y < environment.getHeight(); y++) {
-				if (false == kmlGeography.contains(x, y))
+				System.out.println("Pct: " + (current++ / total) + ", Time: "
+						+ (System.currentTimeMillis() - time));
+
+				if (false == kmlGeography.contains(defaultP.getLocationAt(x, y)))
 					environment.setRGB(x, y, 0);
 			}
 
@@ -109,6 +119,10 @@ public class ImageBackedRealEnvironment implements RealEnvironment {
 		int h = mRealEnviron.getHeight();
 
 		return mProjection.getGeoBoxOf(new Rectangle(w, h));
+	}
+
+	public Dimension getPixelSize() {
+		return new Dimension(mRealEnviron.getWidth(), mRealEnviron.getHeight());
 	}
 
 	// TODO - Remove this once the ImageBackedPerceivedEnviron is no longer

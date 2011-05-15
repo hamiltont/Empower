@@ -85,7 +85,7 @@ public class Model {
 		mKml = kmlgeo; // TODO If the ModelView is caching a rendering of KmlGeo
 		// in a buffer, we should tell it to clear
 	}
-	
+
 	public void setRealEnvironment(RealEnvironment re) {
 		mRealEnv = (ImageBackedRealEnvironment) re;
 		mServer.getMetricCalculator().updateRealEnvironment(mRealEnv);
@@ -96,8 +96,8 @@ public class Model {
 		if (false == reader.read(kmlFile))
 			throw new IllegalStateException("Couldn't create KML");
 
-		KmlGeography geo = new KmlGeography();
-		geo.init(reader.getPoly(), reader.mTopRight, reader.mBottomLeft);
+		KmlGeography geo = new KmlGeography(reader.getPoly(), reader.mTopRight,
+				reader.mBottomLeft);
 
 		// TODO If the ModelView is caching a rendering of KmlGeo in
 		// a buffer, we should tell it to clear

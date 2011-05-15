@@ -1,12 +1,15 @@
 package org.turnerha.metrics;
 
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 
 import org.turnerha.Model;
+import org.turnerha.ModelView;
 import org.turnerha.environment.impl.ImageBackedPerceivedEnvironment;
 import org.turnerha.environment.impl.ImageBackedRealEnvironment;
 import org.turnerha.geography.KmlGeography;
+import org.turnerha.geography.Projection;
 
 /**
  * Tracks the coverage, which is defined as
@@ -50,7 +53,7 @@ import org.turnerha.geography.KmlGeography;
  * @author hamiltont
  * 
  */
-public class CoverageMetric extends  DefaultMetric {
+public class CoverageMetric extends DefaultMetric {
 
 	private double mCoverageTotal = 0;
 	private double mCoverageCurrent = 0;
@@ -106,22 +109,31 @@ public class CoverageMetric extends  DefaultMetric {
 		}
 
 	}
-	
+
 	public double getCoverage() {
 		return mCoverageCurrent / mCoverageTotal;
 	}
 
 	@Override
 	public void updateKML() {
-		mCoverageTotal = 0;
+
+		// The geography has changed, so we need to know how many of the pixels
+		// could possible be covered given this new coverage. For each pixel in
+		// the real network we convert that pixel into a latitude/longitude
+		// value and then ask if it's contained in the KMLGeography
+		ImageBackedRealEnvironment real = (ImageBackedRealEnvironment) Model
+				.getInstance().getRealEnvironment();
 
 		KmlGeography geo = Model.getInstance().getKml();
+		Projection defaultRenderingProjection = ModelView.getInstance()
+				.getDefaultProjection();
 
-		// Determine the total possible coverage
-		Rectangle geoSize = geo.getPixelSize();
-		for (int x = geoSize.x; x < (geoSize.width + geoSize.x); x++)
-			for (int y = geoSize.y; y < (geoSize.height + geoSize.y); y++)
-				if (geo.contains(x, y))
+		Dimension realSize = real.getPixelSize();
+		for (int x = 0; x < realSize.width; x++)
+			for (int y = 0; y < realSize.height; y++)
+				if (geo
+						.contains(defaultRenderingProjection
+								.getLocationAt(x, y)))
 					mCoverageTotal++;
 
 	}

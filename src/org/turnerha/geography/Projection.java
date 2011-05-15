@@ -22,6 +22,8 @@ public interface Projection {
 	 * @return
 	 */
 	public GeoLocation getLocationAt(Point screenPoint);
+	
+	public GeoLocation getLocationAt(int x, int y);
 
 	public Dimension getDimensionsOf(GeoBox geoBox);
 	

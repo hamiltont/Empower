@@ -15,84 +15,83 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Polygon;
 
 /**
- * Allows a kml-based geography file to be painted to the screen. There should
- * only be one of these per run of the simulation, so I am making it a singleton
+ * Data structure for interacting with a KML Geography that the user has
+ * selected. The most important methods are
+ * {@link KmlGeography#paint(Graphics, Projection)} (where this geography will
+ * be painted into the provided graphics using the supplied {@link Projection})
+ * and {@link KmlGeography#contains(GeoLocation)}, which allows someone to ask
+ * the {@link KmlGeography} if that location is contained within. The result of
+ * contains is useful for avoiding extra processing.
+ * 
+ * NOTE: Internally this actually throws away all of the Latitude longitude
+ * data. When the file is read in, a projection (internal and private to this
+ * {@link KmlGeography} instance) is used to convert everything to a 2D
+ * geometry. All incoming points are converted (using the same internal private
+ * projection) to the 2D geometry. This allows the use of the JTS Topology
+ * Suite, which has significantly more advanced 2D topology operations, such as
+ * arbitrary Geometry unions, contains, intersections, etc. Naturally this
+ * internal data structure means that the results of this class are only as good
+ * as the internal projection used, and more specifically the amount of 2D space
+ * we allow to represent the latitude longitude data. I'm not sure how much
+ * error this introduces currently
  * 
  * @author hamiltont
  * 
  */
-
-// TODO Add an applyProjection(Projection p) method
+// TODO Add an intersection method. Once this is added, data readings can be
+// input with arbitrary geo-polygonal regions, that can then be converted to
+// arbitrary Geometry elements, and the intersection of the full e.g. unioned
+// KML and the Geometry can be calculated, and then the appropriate region can
+// be returned. Instead of passing affectedPixels[] to the Metrics, we can
+// actually pass the correct region. For now this is a bit premature - I don't
+// quite know what values to return for now
 public class KmlGeography {
 
 	private List<Polygon> mPolys;
 	private Geometry mUnion;
 
-	private GeoLocation topRight = new GeoLocation(39.520992, -74.421386);
-	private GeoLocation botLeft = new GeoLocation(36.509636, -83.913574);
+	private Projection mProjection;
 
-	private double latDifference = topRight.lat - botLeft.lat;
-	private double lonDifference = botLeft.lon - topRight.lon;
+	private GeoLocation topRight;
+	private GeoLocation botLeft;
 
-	private int mPixelWidth = 1400;
-	private int mPixelHeight = 850;
+	private Color seeThruBlack = new Color(0, 0, 0, 50);
 
-	public KmlGeography() {
-	}
+	/**
+	 * Used to create JTS Points from java.awt.Points in
+	 * {@link KmlGeography#contains(GeoLocation)}
+	 */
+	private GeometryFactory mFactory = new GeometryFactory();
 
-	public void init(List<Polygon> polys, GeoLocation tr, GeoLocation bl) {
+	/**
+	 * Used to create JTS Points from java.awt.Points in
+	 * {@link KmlGeography#contains(GeoLocation)}
+	 */
+	private Coordinate mTempCoord = new Coordinate();
+
+	public KmlGeography(List<Polygon> polys, GeoLocation tr, GeoLocation bl) {
 
 		topRight = tr;
 		botLeft = bl;
-		latDifference = topRight.lat - botLeft.lat;
-		lonDifference = botLeft.lon - topRight.lon;
-
-		Dimension screen = ModelView.getInstance().getRenderingArea();
-		if (screen.width == 0 || screen.height == 0)
-			throw new IllegalStateException(
-					"ModelView.getInstance is not implemented, "
-							+ "or getRenderingArea is being called before it should");
-
-		mPixelWidth = screen.width;
-		mPixelHeight = screen.height;
-
 		mPolys = polys;
+
+		// double latDifference = topRight.lat - botLeft.lat;
+		// double lonDifference = botLeft.lon - topRight.lon;
+
+		// TODO determine if there is any dis/advantage to making this larger. I
+		// just chose a value that makes some sense - it's a fairly large
+		// coordinate space to project stuff into
+		Dimension projectionSpace = new Dimension(Short.MAX_VALUE,
+				Short.MAX_VALUE);
+
+		GeoBox projectionBox = new GeoBox(tr, bl);
+		mProjection = new ProjectionCartesian(projectionBox, projectionSpace);
 
 		Geometry union = new Polygon(null, null, new GeometryFactory());
 		for (Polygon p : polys)
 			union = union.union(p);
 		mUnion = union;
-
-		/*
-		 * for (MyPolygon poly : polys) { poly.mPoints = new
-		 * ArrayList<Point>(poly.mLocations.size()); int[] xArray = new
-		 * int[poly.mLocations.size()]; int[] yArray = new
-		 * int[poly.mLocations.size()];
-		 * 
-		 * int pos = 0; for (GeoLocation dp : poly.mLocations) {
-		 * 
-		 * // Remove the base, and then multiple by pixels per latitude double
-		 * yFloat = (dp.lat - botLeft.lat) (double) (mPixelHeight) /
-		 * latDifference;
-		 * 
-		 * int y = (int) Math.round(yFloat); // Flip to align coordinate systems
-		 * y = mPixelHeight - y;
-		 * 
-		 * // Remove the base, and then multiple by pixels per latitude double
-		 * xFloat = (dp.lon - botLeft.lon) * (double) (mPixelWidth) /
-		 * lonDifference;
-		 * 
-		 * int x = -1 * (int) Math.round(xFloat);
-		 * 
-		 * xArray[pos] = x; yArray[pos] = y;
-		 * 
-		 * poly.mPoints.add(new Point(x, y)); pos++;
-		 * 
-		 * } //poly.mPoly = new
-		 */
 	}
-
-	private Color seeThruBlack = new Color(0, 0, 0, 50);
 
 	public void paint(Graphics g, Projection p) {
 		g.setColor(seeThruBlack);
@@ -106,7 +105,7 @@ public class KmlGeography {
 					Coordinate a = coords[i];
 					int indexb = (i + 1 == coords.length) ? 0 : i + 1;
 					Coordinate b = coords[indexb];
-					
+
 					Point pa = mainP.getPointAt(new GeoLocation(a.y, a.x));
 					Point pb = mainP.getPointAt(new GeoLocation(b.y, b.x));
 					g.drawLine(pa.x, pa.y, pb.x, pb.y);
@@ -117,17 +116,20 @@ public class KmlGeography {
 
 	}
 
-	public boolean contains(GeoLocation point) {
-		com.vividsolutions.jts.geom.Point p = (new GeometryFactory())
-				.createPoint(new Coordinate(point.lon, point.lat));
+	public boolean contains(GeoLocation location) {
+		// First project it into our 2dim space
+		Point p = mProjection.getPointAt(location);
 
-		return mUnion.contains(p);
-	}
+		// Then convert to the JTS Topology Lib version of Point data
+		mTempCoord.x = p.x;
+		mTempCoord.y = p.y;
 
-	public boolean contains(int x, int y) {
-		GeoLocation p = ModelView.getInstance().getDefaultProjection()
-				.getLocationAt(new Point(x, y));
-		return contains(p);
+		// Then create the JTS Topology version of Point
+		com.vividsolutions.jts.geom.Point twoDimPoint = mFactory
+				.createPoint(mTempCoord);
+
+		// Then ask JTS if this point is contained
+		return mUnion.contains(twoDimPoint);
 	}
 
 	public GeoBox getGeoBox() {

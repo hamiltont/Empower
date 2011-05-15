@@ -50,14 +50,16 @@ public class ProjectionCartesian implements Projection {
 	// TODO - check that this works?
 	@Override
 	public GeoLocation getLocationAt(Point screenPoint) {
+		return getLocationAt(screenPoint.x, screenPoint.y);
+	}
+	
+	public GeoLocation getLocationAt(int x, int y) {
 
 		double lat = 0, lon = 0;
 
 		// TODO - Add in checks for the location being outside the GeoBox of
 		// interest. For now, we just assume that the projection is being used
 		// for the entire geographical area of interest
-
-		int y = screenPoint.y;
 
 		// Flip to align coordinate systems
 		y = (int) mDesiredSize.getHeight() - y;
@@ -69,7 +71,6 @@ public class ProjectionCartesian implements Projection {
 		lat = yFloat * mLatDifference / mDesiredSize.getHeight()
 				+ mGeoBox.getBottomLeft().lat;
 
-		int x = screenPoint.x;
 		double xFloat = -1 * x + 0.5;
 
 		// Multiple by pixels per latitude, and then remove the base
